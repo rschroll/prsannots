@@ -22,7 +22,7 @@ def get_annotated_pdfs(db):
 
 def get_annotations(db, book_id):
     c = db.cursor()
-    c.execute('''select page, svg_file, crop_left, crop_top, crop_right, crop_bottom
+    c.execute('''select page, svg_file, crop_left, crop_top, crop_right, crop_bottom, orientation
                     from freehand
                     where content_id = ?
                     order by page''', (book_id,))
@@ -57,8 +57,10 @@ def svg2pdf(svg):
     pdf = pyPdf.PdfFileReader(StringIO(pdfstring))
     return pdf.getPage(0)
 
-def scale_offset(svgcrop, svgcanvas, pdfcrop):
+def scale_offset(svgcrop, svgcanvas, orientation, pdfcrop):
     svgw, svgh = map(float, svgcrop[2:])
+    if orientation in (u'90', u'270'):
+        svgw, svgh = svgh, svgw
     svgcw, svgch = map(float, svgcanvas)
     (cropx0, cropy0), (cropx1, cropy1) = map(float, pdfcrop.lowerLeft), map(float, pdfcrop.upperRight)
     cropw = cropx1 - cropx0
@@ -70,7 +72,7 @@ def scale_offset(svgcrop, svgcanvas, pdfcrop):
         scale = cropw/svgw
         cropy0 += croph/2 - svgh*scale/2
     
-    return scale, cropx0 + (svgw - svgcw) * scale, cropy0 + (svgh - svgch) * scale
+    return scale, cropx0, cropy0 + (svgh - svgch) * scale
 
 def main(path):
     db = get_database(path)
@@ -85,8 +87,9 @@ def main(path):
         while annots and int(annots[0][0]) == i:
             svg = clean_svg(path, annots[0][1])
             apage = svg2pdf(svg)
-            scale, offsetx, offsety = scale_offset(annots[0][2:],
-                                        map(svg.getAttribute, ('width', 'height')), crop)
+            scale, offsetx, offsety = scale_offset(annots[0][2:6],
+                                        map(svg.getAttribute, ('width', 'height')), 
+                                        annots[0][6], crop)
             page.mergeScaledTranslatedPage(apage, scale, offsetx, offsety)
             annots.pop(0)
         outpdf.addPage(page)
