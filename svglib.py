@@ -491,7 +491,7 @@ class SvgRenderer:
     def render(self, node, parent=None):
         if parent == None:
             parent = self.mainGroup
-        name = node.nodeName
+        name = node.nodeName.split(':')[-1]  # Get rid of any namespace prefix
         if self.verbose:
             format = "%s%s"
             args = ('  '*self.level, name)
@@ -827,13 +827,14 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
         for c in node.childNodes:
             dx, dy = 0, 0
             baseLineShift = 0
+            name = c.nodeName.split(':')[-1]
             if c.nodeType == c.TEXT_NODE:
                 frags.append(c.nodeValue)
                 try:
                     tx = ''.join([chr(ord(f)) for f in frags[-1]])
                 except ValueError:
                     tx = "Unicode"
-            elif c.nodeType == c.ELEMENT_NODE and c.nodeName == "tspan":
+            elif c.nodeType == c.ELEMENT_NODE and name == "tspan":
                 frags.append(c.firstChild.nodeValue)
                 tx = ''.join([chr(ord(f)) for f in frags[-1]])
                 getAttr = c.getAttribute
@@ -848,7 +849,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                     baseLineShift = {"sub":-fs/2, "super":fs/2, "baseline":0}[baseLineShift]
                 else:
                     baseLineShift = attrConv.convertLength(baseLineShift, fs)
-            elif c.nodeType == c.ELEMENT_NODE and c.nodeName != "tspan":
+            elif c.nodeType == c.ELEMENT_NODE and name != "tspan":
                 continue
 
             fragLengths.append(stringWidth(tx, ff, fs))
@@ -859,7 +860,7 @@ class Svg2RlgShapeConverter(SvgShapeConverter):
                 text = "Unicode"
             shape = String(x+rl, y-y1-dy0+baseLineShift, text)
             self.applyStyleOnShape(shape, node)
-            if c.nodeType == c.ELEMENT_NODE and c.nodeName == "tspan":
+            if c.nodeType == c.ELEMENT_NODE and name == "tspan":
                 self.applyStyleOnShape(shape, c)
 
             gr.add(shape)

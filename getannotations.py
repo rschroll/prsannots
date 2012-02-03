@@ -2,11 +2,10 @@
 
 import os
 import sys
-import tempfile
 import sqlite3
 from xml.dom import minidom
-import rsvg
-import cairo
+import svglib
+from StringIO import StringIO
 import pyPdf
 
 def get_database(path):
@@ -49,40 +48,29 @@ def clean_svg(path, fn):
         svg.setAttribute(attr, drawing.getAttribute(attr))
     return svg
 
-def svg2pdf(svg, svgcrop, pdfcrop):
-    fh, tempfn = tempfile.mkstemp()
-    os.close(fh)
-    svg.writexml(open(tempfn, 'w'))
+def svg2pdf(svg):
+    renderer = svglib.SvgRenderer()
+    renderer.render(svg)
+    drawing = renderer.finish()
     
+    pdfstring = svglib.renderPDF.drawToString(drawing)
+    pdf = pyPdf.PdfFileReader(StringIO(pdfstring))
+    return pdf.getPage(0)
+
+def scale_offset(svgcrop, svgcanvas, pdfcrop):
     svgw, svgh = map(float, svgcrop[2:])
+    svgcw, svgch = map(float, svgcanvas)
     (cropx0, cropy0), (cropx1, cropy1) = map(float, pdfcrop.lowerLeft), map(float, pdfcrop.upperRight)
     cropw = cropx1 - cropx0
     croph = cropy1 - cropy0
     if croph/cropw > svgh/svgw:  # Tall and skinny
-        midx = cropx0 + cropw/2
-        cropw = svgw/svgh * croph
-        cropx0 = midx - cropw/2
-        cropx1 = midx + cropw/2
+        scale = croph/svgh
+        cropx0 += cropw/2 - svgw*scale/2
     else:
-        midy = cropy0 + croph/2
-        croph = svgh/svgw * cropw
-        cropy0 = midy - croph/2
-        cropy1 = midy + croph/2
+        scale = cropw/svgw
+        cropy0 += croph/2 - svgh*scale/2
     
-    rs = rsvg.Handle(tempfn)
-    surf = cairo.PDFSurface(tempfn, cropx1, cropy1)
-    cr = cairo.Context(surf)
-    # The cairo coordinate system is from the top left, not the bottom left of PDFs.
-    # We created the surface to be just as big as we need it, so we don't have to
-    # to any vertical translations; we're already lined up at the top of the box.
-    cr.translate(cropx0, 0)
-    cr.scale(cropw/svgw, croph/svgh)
-    rs.render_cairo(cr)
-    surf.finish()
-    
-    pdf = pyPdf.PdfFileReader(open(tempfn, 'r'))
-    os.unlink(tempfn)
-    return pdf.getPage(0)
+    return scale, cropx0 + (svgw - svgcw) * scale, cropy0 + (svgh - svgch) * scale
 
 def main(path):
     db = get_database(path)
@@ -95,8 +83,11 @@ def main(path):
     for i, page in enumerate(pdf.pages):
         crop = page.cropBox
         while annots and int(annots[0][0]) == i:
-            apage = svg2pdf(clean_svg(path, annots[0][1]), annots[0][2:], crop)
-            page.mergePage(apage)
+            svg = clean_svg(path, annots[0][1])
+            apage = svg2pdf(svg)
+            scale, offsetx, offsety = scale_offset(annots[0][2:],
+                                        map(svg.getAttribute, ('width', 'height')), crop)
+            page.mergeScaledTranslatedPage(apage, scale, offsetx, offsety)
             annots.pop(0)
         outpdf.addPage(page)
     title = title or book_file.split('/')[-1]
