@@ -1,13 +1,29 @@
 #!/usr/bin/env python
 
-USAGE = """
+"""
 %s mount-point
 
 Find all annotated PDFs on the Sony PRS-T1 mounted at the specified
 mount point, and present a menu to let the user chose to export one
 of them with annotations.  Currently, only the freehand annotations
-directly on the page are supported.
+drawn directly on the page are supported.
 """
+
+# Copyright 2012 Robert Schroll
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this program.  If not, see
+# <http://www.gnu.org/licenses/>.
 
 import os
 import sys
@@ -16,6 +32,11 @@ from xml.dom import minidom
 import svglib
 from StringIO import StringIO
 import pyPdf
+
+__version__ = "0.1"
+__license__ = "LGPL 3"
+__author__ = "Robert Schroll"
+__date__ = "2012-02-04"
 
 def get_database(path):
     return sqlite3.connect(os.path.join(path, 'Sony_Reader', 'database', 'books.db'))
@@ -111,7 +132,7 @@ def main(path):
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
-        print USAGE % sys.argv[0]
+        print __doc__ % sys.argv[0]
         sys.exit(0)
     if not os.path.ismount(sys.argv[1]):
         print "First argument must be mount point of Sony Reader."
