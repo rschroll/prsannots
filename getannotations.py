@@ -93,10 +93,11 @@ def main(path):
             page.mergeScaledTranslatedPage(apage, scale, offsetx, offsety)
             annots.pop(0)
         outpdf.addPage(page)
-    title = title or book_file.split('/')[-1]
-    title = title.replace(os.path.sep, '_') + '.annot.pdf'
-    outpdf.write(open(title, 'w'))
-    print "Annotated file saved as", title
+    outfn = os.path.splitext(os.path.basename(book_file))[0] + '.annot.pdf'
+    userfn = raw_input("Enter output file name [%s]: " % outfn)
+    if userfn:
+        outfn = userfn
+    outpdf.write(open(outfn, 'w'))
 
 if __name__ == '__main__':
     main(*sys.argv[1:])
