@@ -76,10 +76,11 @@ def scale_offset(svgcrop, svgcanvas, orientation, pdfcrop):
     croph = cropy1 - cropy0
     if croph/cropw > svgh/svgw:  # Tall and skinny
         scale = croph/svgh
-        cropx0 += cropw/2 - svgw*scale/2
     else:
         scale = cropw/svgw
-        cropy0 += croph/2 - svgh*scale/2
+    scale *= 1.023  # Empirical factor to get size right.
+    cropx0 += cropw/2 - svgw*scale/2
+    cropy0 += croph/2 - svgh*scale/2
     
     return scale, cropx0, cropy0 + (svgh - svgch) * scale
 
