@@ -1,5 +1,14 @@
 #!/usr/bin/env python
 
+USAGE = """
+%s mount-point
+
+Find all annotated PDFs on the Sony PRS-T1 mounted at the specified
+mount point, and present a menu to let the user chose to export one
+of them with annotations.  Currently, only the freehand annotations
+directly on the page are supported.
+"""
+
 import os
 import sys
 import sqlite3
@@ -9,7 +18,7 @@ from StringIO import StringIO
 import pyPdf
 
 def get_database(path):
-    return sqlite3.connect(os.path.join(path, *('Sony_Reader', 'database', 'books.db')))
+    return sqlite3.connect(os.path.join(path, 'Sony_Reader', 'database', 'books.db'))
 
 def get_annotated_pdfs(db):
     c = db.cursor()
@@ -42,7 +51,7 @@ def select_book(books):
 
 def clean_svg(path, fn):
     doc = minidom.parse(os.path.join(path, fn))
-    drawing = doc.getElementsByTagNameNS("http://www.sony.com/notepad", "drawing")[0]
+    drawing = doc.getElementsByTagNameNS('http://www.sony.com/notepad', 'drawing')[0]
     svg = doc.getElementsByTagNameNS('http://www.w3.org/2000/svg','svg')[0]
     for attr in ('width', 'height'):
         svg.setAttribute(attr, drawing.getAttribute(attr))
@@ -100,4 +109,11 @@ def main(path):
     outpdf.write(open(outfn, 'w'))
 
 if __name__ == '__main__':
-    main(*sys.argv[1:])
+    if len(sys.argv) != 2:
+        print USAGE % sys.argv[0]
+        sys.exit(0)
+    if not os.path.ismount(sys.argv[1]):
+        print "First argument must be mount point of Sony Reader."
+        print "(%s does not appear to be a mount point.)" % sys.argv[1]
+        sys.exit(1)
+    main(sys.argv[1])
