@@ -88,8 +88,6 @@ class Freehand(object):
     
     def scale_offset(self, pdfcrop):
         svgw, svgh = self.crop[2:]
-        if self.orientation in (90, 270):
-            svgw, svgh = svgh, svgw
         svgcw, svgch = [float(self.svg.getAttribute(x)) for x in ('width', 'height')]
         cropx0, cropy0, cropx1, cropy1 = pdfcrop
         cropw = cropx1 - cropx0
