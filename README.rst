@@ -10,7 +10,7 @@ Usage
 -----
 Invoke the script with the mount point of your ereader as the argument::
 
-  prsannots /path/to/ereader
+  prsannots.py /path/to/ereader
 
 On my Ubuntu Linux system, this mount point is ``/media/READER``. You'll
 be presented with a list of all PDF files with annotations on the
