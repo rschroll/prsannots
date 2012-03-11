@@ -36,12 +36,16 @@ __author__ = "Robert Schroll"
 __date__ = "2012-02-04"
 
 
+def u_raw_input(prompt):
+    """raw_input with unicode encoding/decoding."""
+    return raw_input(prompt.encode(sys.stdout.encoding)).decode(sys.stdin.encoding)
+
 def select_book(books):
     print "Please select which book to get:"
     for i, book in enumerate(books):
         title = book.title or book.file.split('/')[-1]
         print "  %i. %s" % (i+1, title)
-    which = raw_input("> ")
+    which = u_raw_input("> ")
     try:
         return books[int(which) - 1]
     except (ValueError, IndexError):
@@ -61,7 +65,7 @@ def main(path):
             annots.pop(0)
         outpdf.addPage(page)
     outfn = os.path.splitext(os.path.basename(book.file))[0] + '.annot.pdf'
-    userfn = raw_input("Enter output file name [%s]: " % outfn)
+    userfn = u_raw_input("Enter output file name [%s]: " % outfn)
     if userfn:
         outfn = userfn
     outpdf.write(open(outfn, 'w'))
