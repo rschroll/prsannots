@@ -19,15 +19,17 @@ save it as.  The script will exit after creating the annotated PDF file.
 
 Requirements
 ------------
-You'll need some version of Python 2.  Thus far, prsannots has only been
-tested on 2.7, but there's no reason it shouldn't work on previous
-versions.  It is not compatible with Python 3.
+You'll need some version of Python 2.  Thus far, prsannots has been
+tested on 2.6 and 2.7, but there's no reason it shouldn't work on
+previous versions.  (That said, maintaining compatibility with 2.5 and
+earlier is not a goal.)  It is not compatible with Python 3.
 
-In addition to the standard library, it requires the pyPdf_ and
+In addition to the standard library, it requires the pyPdf_ (>= 1.13) and
 ReportLab_ libraries.  For Debian-based systems, these are provided by
-the ``python-pypdf`` and ``python-reportlab`` packages.  prsannots also
-makes use of a modified version of svglib_, but this is shipped with the
-script.
+the ``python-pypdf`` and ``python-reportlab`` packages.  (Note that
+Debian prior to Wheezy and Ubuntu prior to 11.10 have a too-old version
+of pyPdf.)  prsannots also makes use of a modified version of svglib_,
+but this is shipped with the script.
 
 .. _pyPDF: http://pybrary.net/pyPdf/
 .. _ReportLab: http://www.reportlab.com/software/opensource/rl-toolkit/
@@ -53,7 +55,7 @@ Alternatively, you can download and unpack the zipball_.
 
 .. _zipball: https://github.com/rschroll/prsannots/zipball/master
 
-There's no installation procedure—just run the script.
+There's no installation procedure yet—just run the script.
 
 Development
 -----------
