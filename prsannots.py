@@ -61,7 +61,7 @@ def main(path):
     for i, page in enumerate(book.pdf.pages):
         crop = page.cropBox
         while annots and annots[0].page == i:
-            annots[0].write_to_pdf(page)
+            annots[0].write_to_pdf(page, outpdf)
             annots.pop(0)
         outpdf.addPage(page)
     outfn = os.path.splitext(os.path.basename(book.file))[0] + '.annot.pdf'

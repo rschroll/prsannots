@@ -8,6 +8,10 @@ from xml.dom import minidom
 import svglib
 from StringIO import StringIO
 import pyPdf
+from pagetext import PageText, get_layouts
+from highlight import highlight_annotation, add_annotation
+
+HIGHLIGHT, HIGHLIGHT_TEXT, HIGHLIGHT_DRAWING = 10, 11, 12
 
 class Reader(object):
     
@@ -34,6 +38,8 @@ class Book(object):
         self.title = title
         self.file = filepath
         self.thumbnail = thumbnail
+        self._layouts = None
+        self._page_texts = {}
     
     @property
     def annotations(self):
@@ -47,6 +53,16 @@ class Book(object):
     @property
     def pdf(self):
         return pyPdf.PdfFileReader(open(os.path.join(self.reader.path, self.file), 'r'))
+    
+    def pdf_layout(self, page):
+        if self._layouts is None:
+            self._layouts = get_layouts(open(os.path.join(self.reader.path, self.file), 'r'))
+        return self._layouts[page]
+    
+    def page_text(self, page):
+        if page not in self._page_texts:
+            self._page_texts[page] = PageText(self.pdf_layout(page))
+        return self._page_texts[page]
 
 
 class Freehand(object):
@@ -80,7 +96,7 @@ class Freehand(object):
         pdfdoc = pyPdf.PdfFileReader(StringIO(pdfstring))
         return pdfdoc.getPage(0)
     
-    def write_to_pdf(self, page, crop=None):
+    def write_to_pdf(self, page, outpdf, crop=None):
         if crop is None:
             cb = page.cropBox
             crop = map(float, cb.lowerLeft) + map(float, cb.upperRight)
@@ -101,3 +117,33 @@ class Freehand(object):
         cropy0 += croph/2 - svgh*scale/2
         
         return scale, cropx0, cropy0 + (svgh - svgch) * scale
+
+
+class Highlight(object):
+    """ Encapsulate a highlighted annotation to a Book.
+    """
+    
+    def __init__(self, book, page, area, content_type, content=None):
+        self.book = book
+        self.page = int(page)
+        if isinstance(area, basestring):
+            self.bboxes = self.book.page_text(self.page).box_substring(area)
+        else:
+            self.bboxes = area
+        self.content_type = content_type
+        self.content = content
+    
+    @property
+    def text_content(self):
+        if self.content_type is HIGHLIGHT:
+            return None
+        if self.content_type is HIGHLIGHT_TEXT:
+            doc = minidom.parse(os.path.join(self.book.reader.path, self.content))
+            text = doc.getElementsByTagName('text')[0]
+            return text.childNodes[0].toxml()
+        if self.content_type is HIGHLIGHT_DRAWING:
+            return "Can't handle drawings yet.  (Sorry.)"
+    
+    def write_to_pdf(self, page, outpdf):
+        annot = highlight_annotation(self.bboxes, self.text_content, 'Sony eReader')
+        add_annotation(outpdf, page, annot)

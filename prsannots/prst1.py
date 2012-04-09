@@ -15,10 +15,15 @@ class Reader(generic.Reader):
     
     def _get_books(self):
         c = self.db.cursor()
+        # markup_types:  0 bookmark
+        #               10 highlight
+        #               11 text
+        #               12 drawing
+        #               20 freehand
         c.execute('''select books._id, books.title, books.file_path, books.thumbnail
-                        from books inner join freehand
-                        on books._id = freehand.content_id
-                        where mime_type = "application/pdf"
+                        from books inner join markups
+                        on books._id = markups.content_id
+                        where mime_type = "application/pdf" and markup_type != 0
                         group by books._id''')
         return [Book(self, *line) for line in c]
 
@@ -30,5 +35,13 @@ class Book(generic.Book):
                         from freehand
                         where content_id = ?
                         order by page''', (self.id,))
-        return [generic.Freehand(self, *line) for line in c]
+        freehand = [generic.Freehand(self, *line) for line in c]
+        
+        c.execute('''select page, marked_text, markup_type, file_path
+                        from annotation
+                        where content_id = ?
+                        order by page''', (self.id,))
+        highlight = [generic.Highlight(self, *line) for line in c]
+        
+        return freehand + highlight
 
