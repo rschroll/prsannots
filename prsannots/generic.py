@@ -8,8 +8,8 @@ from xml.dom import minidom
 import svglib
 from StringIO import StringIO
 import pyPdf
-from pagetext import PageText, get_layouts
-from pdfannotation import highlight_annotation, add_annotation
+from pagetext import PageText, get_layouts, NoSubstringError, MultipleSubstringError
+from pdfannotation import highlight_annotation, text_annotation, add_annotation
 
 HIGHLIGHT, HIGHLIGHT_TEXT, HIGHLIGHT_DRAWING = 10, 11, 12
 
@@ -123,11 +123,21 @@ class Highlight(object):
     """ Encapsulate a highlighted annotation to a Book.
     """
     
-    def __init__(self, book, page, area, content_type, content=None):
+    def __init__(self, book, page, area, content_type, content=None, strict=False):
         self.book = book
         self.page = int(page)
+        self.message = ''
         if isinstance(area, basestring):
-            self.bboxes = self.book.page_text(self.page).box_substring(area)
+            try:
+                self.bboxes = self.book.page_text(self.page).box_substring(area, strict)
+            except NoSubstringError:
+                self.message = '\n\nThis note was supposed to be attached to the following ' \
+                               'text, which was not found on this page.\n' + area
+                self.bboxes = None
+            except MultipleSubstringError:
+                self.message = '\n\nThis note was supposed to be attached to the following ' \
+                               'text, which was found multiple times on this page.\n' + area
+                self.bboxes = None
         else:
             self.bboxes = area
         self.content_type = content_type
@@ -140,10 +150,19 @@ class Highlight(object):
         if self.content_type is HIGHLIGHT_TEXT:
             doc = minidom.parse(os.path.join(self.book.reader.path, self.content))
             text = doc.getElementsByTagName('text')[0]
-            return text.childNodes[0].toxml()
+            return text.childNodes[0].toxml() + self.message
         if self.content_type is HIGHLIGHT_DRAWING:
-            return "Can't handle drawings yet.  (Sorry.)"
+            return "Can't handle drawings yet.  (Sorry.)" + self.message
     
     def write_to_pdf(self, page, outpdf):
-        annot = highlight_annotation(self.bboxes, self.text_content, 'Sony eReader')
+        if self.bboxes is not None:
+            annot = highlight_annotation(self.bboxes, self.text_content, 'Sony eReader')
+        else:
+            if not hasattr(page, 'prsannot_vskip'):
+                page.prsannot_vskip = 0
+            
+            x,y = map(float, page.cropBox.upperLeft)
+            x,y = x+10, y-10-page.prsannot_vskip # Add a little margin
+            page.prsannot_vskip += 25
+            annot = text_annotation([x, y, x, y], self.text_content, 'Sony eReader')
         add_annotation(outpdf, page, annot)
