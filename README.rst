@@ -2,9 +2,9 @@ prsannots
 =========
 
 prsannots is a Python script that lets you save versions of PDF files
-that you've annotated on your Sony PRS-T1 ereader.  Currently, it only
-supports freehand annotations on the page itself, not annotations of
-highlighted passages, but we hope to improve this.
+that you've annotated on your Sony PRS-T1 ereader.  It supports both
+freehand and highlighted annotations, though the latter is apt to be a
+bit flaky.  Drawings attached to highlighted passages are not transfered.
 
 Usage
 -----
@@ -24,15 +24,18 @@ tested on 2.6 and 2.7, but there's no reason it shouldn't work on
 previous versions.  (That said, maintaining compatibility with 2.5 and
 earlier is not a goal.)  It is not compatible with Python 3.
 
-In addition to the standard library, it requires the pyPdf_ (>= 1.13) and
-ReportLab_ libraries.  For Debian-based systems, these are provided by
-the ``python-pypdf`` and ``python-reportlab`` packages.  (Note that
-Debian prior to Wheezy and Ubuntu prior to 11.10 have a too-old version
-of pyPdf.)  prsannots also makes use of a modified version of svglib_,
-but this is shipped with the script.
+In addition to the standard library, it requires the pyPdf_ (>= 1.13),
+ReportLab_, and PDFMiner_ libraries.  For Debian-based systems, the
+first two are provided by the ``python-pypdf`` and ``python-reportlab``
+packages.  (Note that Debian prior to Wheezy and Ubuntu prior to 11.10
+have a too-old version of pyPdf.)  All three are available in PyPI_.
+prsannots also makes use of a modified version of svglib_, but this is
+shipped with the script.
 
 .. _pyPDF: http://pybrary.net/pyPdf/
 .. _ReportLab: http://www.reportlab.com/software/opensource/rl-toolkit/
+.. _PDFMiner: http://www.unixuser.org/~euske/python/pdfminer/
+.. _PyPI: http://pypi.python.org/pypi
 .. _svglib: http://pypi.python.org/pypi/svglib/
 
 This script has been developed and tested in Linux, but it should work
