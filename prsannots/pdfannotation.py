@@ -10,13 +10,14 @@ def float_array(lst):
     return ArrayObject([FloatObject(i) for i in lst])
 
 def _markup_annotation(rect, contents=None, author=None, subject=None,
-                       color=[1,0,0], alpha=1, flag=4):
+                       color=None, alpha=1, flag=4):
+    """ Set shared properties of all markup annotations.
+    """
     
     # Python timezone handling is a messs, so just use UTC
     now = datetime.utcnow().strftime("D:%Y%m%d%H%M%SZ00'00")
     
-    retval = DictionaryObject({ NameObject('/C'): float_array(color),
-                                NameObject('/CA'): FloatObject(alpha),
+    retval = DictionaryObject({ NameObject('/CA'): FloatObject(alpha),
                                 NameObject('/F'): NumberObject(flag),
                                 NameObject('/Rect'): float_array(rect),
                                 NameObject('/Type'): NameObject('/Annot'),
@@ -29,6 +30,8 @@ def _markup_annotation(rect, contents=None, author=None, subject=None,
         retval[NameObject('/T')] = TextStringObject(author)
     if subject is not None:
         retval[NameObject('/Subj')] = TextStringObject(subject)
+    if color is not None:
+        retval[NameObject('/C')] = float_array(color)
     return retval
 
 
@@ -68,6 +71,48 @@ def highlight_annotation(quadpoints, contents=None, author=None,
     retval[NameObject('/QuadPoints')] = float_array(qpl)
     return retval
 
+def text_annotation(rect, contents=None, author=None, subject=None, color=[0.94,0.86,0.33],
+                    alpha=1, flag=4, icon=None, open_=False, state=None, state_model=None):
+    """ Create a 'Text' annotation, a sticky note at the location rect.
+    
+    Inputs: rect        A rectangle [x0,y0,x1,y1].  The icon will be in the top-
+                        left corner of this rectangle (x0,y1) regardless of the
+                        size of the rectangle.
+            
+            contents    Strings giving the content, author, and subject of the
+            author      annotation
+            subject
+            
+            color       The color of the note, as an array of type
+                        [g], [r,g,b], or [c,m,y,k].
+            
+            alpha       The alpha transparency of the note.
+            
+            flag        A bit flag of options.  4 means the annotation should be
+                        printed.  See the PDF spec for more.
+            
+            icon        The icon to use for the note.  Try "Comment", "Key",
+                        "Note", "Help", "NewParagraph", "Paragraph", "Insert"
+            
+            open_       Whether the note should be opened by default.
+            
+            state       These set the state of the annotation.  See the PDF spec
+            state_model for further details.
+    
+    Output: A DictionaryObject representing the annotation.
+    """
+    
+    retval = _markup_annotation(rect, contents, author, subject, color, alpha, flag)
+    retval[NameObject('/Subtype')] = NameObject('/Text')
+    retval[NameObject('/Open')] = BooleanObject(open_)
+    if icon is not None:
+        retval[NameObject('/Name')] = NameObject('/' + icon)
+    if state is not None:
+        retval[NameObject('/State')] = TextStringObject(state)
+    if state_model is not None:
+        retval[NameObject('/StateModel')] = TextStringObject(state_model)
+    return retval
+
 def add_annotation(outpdf, page, annot):
     """ Add the annotation 'annot' to the page 'page' that is/will be part of
     the PdfFileWriter 'outpdf'.
@@ -89,12 +134,15 @@ if __name__ == '__main__':
     except (IndexError, IOError):
         print "Needs PDF file as an argument."
         raise SystemExit
-    annot = highlight_annotation([[100, 100, 400, 125]],
+    annot1 = highlight_annotation([[100, 100, 400, 125]],
                 'An argument is a connected series of statements intended to establish a proposition.', 
-                'I came here for a good argument.', 'Graham Chapman')
+                'Graham Chapman', 'I came here for a good argument.')
+    annot2 = text_annotation([100, 50, 125, 75],
+                "No it isn't.", 'John Cleese', "No you didn't.")
     page = inpdf.getPage(0)
     outpdf = pyPdf.PdfFileWriter()
-    add_annotation(outpdf, page, annot)
+    add_annotation(outpdf, page, annot1)
+    add_annotation(outpdf, page, annot2)
     outpdf.addPage(page)
     outpdf.write(open('pythonannotation.pdf', 'w'))
     print "Highlighted PDF output to pythonannotation.pdf"
