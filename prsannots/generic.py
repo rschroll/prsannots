@@ -9,7 +9,7 @@ import svglib
 from StringIO import StringIO
 import pyPdf
 from pagetext import PageText, get_layouts
-from highlight import highlight_annotation, add_annotation
+from pdfannotation import highlight_annotation, add_annotation
 
 HIGHLIGHT, HIGHLIGHT_TEXT, HIGHLIGHT_DRAWING = 10, 11, 12
 

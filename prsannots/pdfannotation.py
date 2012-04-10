@@ -9,6 +9,29 @@ from pyPdf.generic import *
 def float_array(lst):
     return ArrayObject([FloatObject(i) for i in lst])
 
+def _markup_annotation(rect, contents=None, author=None, subject=None,
+                       color=[1,0,0], alpha=1, flag=4):
+    
+    # Python timezone handling is a messs, so just use UTC
+    now = datetime.utcnow().strftime("D:%Y%m%d%H%M%SZ00'00")
+    
+    retval = DictionaryObject({ NameObject('/C'): float_array(color),
+                                NameObject('/CA'): FloatObject(alpha),
+                                NameObject('/F'): NumberObject(flag),
+                                NameObject('/Rect'): float_array(rect),
+                                NameObject('/Type'): NameObject('/Annot'),
+                                NameObject('/CreationDate'): TextStringObject(now),
+                                NameObject('/M'): TextStringObject(now),
+                             })
+    if contents is not None:
+        retval[NameObject('/Contents')] = TextStringObject(contents)
+    if author is not None:
+        retval[NameObject('/T')] = TextStringObject(author)
+    if subject is not None:
+        retval[NameObject('/Subj')] = TextStringObject(subject)
+    return retval
+
+
 def highlight_annotation(quadpoints, contents=None, author=None,
                          subject=None, color=[1,1,0], alpha=1, flag=4):
     """ Create a 'Highlight' annotation that covers the area given by quadpoints.
@@ -39,25 +62,10 @@ def highlight_annotation(quadpoints, contents=None, author=None,
     # Annotation goes at upper left corner of /Rect.  But this doesn't
     # seem to matter for text markup annotations.
     rect = qpl[:2] + qpl[:2]
-    # Python timezone handling is a messs, so just use UTC
-    now = datetime.utcnow().strftime("D:%Y%m%d%H%M%SZ00'00")
     
-    retval = DictionaryObject({ NameObject('/C'): float_array(color),
-                                NameObject('/CA'): FloatObject(alpha),
-                                NameObject('/F'): NumberObject(flag),
-                                NameObject('/QuadPoints'): float_array(qpl),
-                                NameObject('/Rect'): float_array(rect),
-                                NameObject('/Type'): NameObject('/Annot'),
-                                NameObject('/Subtype'): NameObject('/Highlight'),
-                                NameObject('/CreationDate'): TextStringObject(now),
-                                NameObject('/M'): TextStringObject(now),
-                             })
-    if contents is not None:
-        retval[NameObject('/Contents')] = TextStringObject(contents)
-    if author is not None:
-        retval[NameObject('/T')] = TextStringObject(author)
-    if subject is not None:
-        retval[NameObject('/Subj')] = TextStringObject(subject)
+    retval = _markup_annotation(rect, contents, author, subject, color, alpha, flag)
+    retval[NameObject('/Subtype')] = NameObject('/Highlight')
+    retval[NameObject('/QuadPoints')] = float_array(qpl)
     return retval
 
 def add_annotation(outpdf, page, annot):
