@@ -45,6 +45,7 @@ class Book(object):
     def annotations(self):
         if not hasattr(self, '_annotations'):
             self._annotations = self._get_annotations()
+            self._annotations.sort(lambda a,b: cmp(a.page, b.page))
         return self._annotations
     
     def _get_annotations(self):
