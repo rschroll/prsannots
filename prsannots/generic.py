@@ -13,6 +13,9 @@ from pdfannotation import highlight_annotation, text_annotation, add_annotation
 
 HIGHLIGHT, HIGHLIGHT_TEXT, HIGHLIGHT_DRAWING = 10, 11, 12
 
+def intersection(a, b):
+    return (max(a[0], b[0]), max(a[1], b[1]), min(a[2], b[2]), min(a[3], b[3]))
+
 class Reader(object):
     
     def __init__(self, path):
@@ -99,14 +102,14 @@ class Freehand(object):
     
     def write_to_pdf(self, page, outpdf, crop=None):
         if crop is None:
-            cb = page.cropBox
-            crop = map(float, cb.lowerLeft) + map(float, cb.upperRight)
+            # The reader displays the intersection of the cropBox and the mediaBox.
+            crop = intersection(page.cropBox[:], page.mediaBox[:])
         page.mergeScaledTranslatedPage(self.pdf, *self.scale_offset(crop))
     
     def scale_offset(self, pdfcrop):
         svgw, svgh = self.crop[2:]
         svgcw, svgch = [float(self.svg.getAttribute(x)) for x in ('width', 'height')]
-        cropx0, cropy0, cropx1, cropy1 = pdfcrop
+        cropx0, cropy0, cropx1, cropy1 = map(float, pdfcrop)
         cropw = cropx1 - cropx0
         croph = cropy1 - cropy0
         if croph/cropw > svgh/svgw:  # Tall and skinny
@@ -155,15 +158,20 @@ class Highlight(object):
         if self.content_type is HIGHLIGHT_DRAWING:
             return "Can't handle drawings yet.  (Sorry.)" + self.message
     
-    def write_to_pdf(self, page, outpdf):
+    def write_to_pdf(self, page, outpdf, crop=None):
+        if crop is None:
+            # PDFMiner reports positions relative to the mediaBox.
+            crop = page.mediaBox[:]
         if self.bboxes is not None:
-            annot = highlight_annotation(self.bboxes, self.text_content, 'Sony eReader')
+            shifted_bboxes = [(bb[0] + crop[0], bb[1] + crop[1], bb[2] + crop[0], bb[3] + crop[1])
+                              for bb in self.bboxes]
+            annot = highlight_annotation(shifted_bboxes, self.text_content, 'Sony eReader')
         else:
             if not hasattr(page, 'prsannot_vskip'):
                 page.prsannot_vskip = 0
             
-            x,y = map(float, page.cropBox.upperLeft)
-            x,y = x+10, y-10-page.prsannot_vskip # Add a little margin
+            pcrop = intersection(page.cropBox[:], page.mediaBox[:])
+            x,y = pcrop[0]+10, pcrop[3]-10-page.prsannot_vskip # Add a little margin
             page.prsannot_vskip += 25
             annot = text_annotation([x, y, x, y], self.text_content, 'Sony eReader')
         add_annotation(outpdf, page, annot)

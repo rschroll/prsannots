@@ -110,7 +110,8 @@ class PageText(object):
                 length  The number of characters to contain.
         
         Returns a list bounding boxes, each one a list of length 4:
-        [left, bottom, right, top].
+        [left, bottom, right, top].  These are measured relative to the
+        lower left of the mediaBox, NOT in absolute coordinates.
         """
         
         bbox = []
@@ -144,7 +145,8 @@ class PageText(object):
                         MultipleSubstringError is raised.
         
         Returns a list bounding boxes, each one a list of length 4:
-        [left, bottom, right, top].
+        [left, bottom, right, top].  These are measured relative to the
+        lower left of the mediaBox, NOT in absolute coordinates.
         """
 
         s = unicode(self)
