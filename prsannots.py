@@ -52,26 +52,15 @@ def select_book(books):
         print "Could not understand your response.  Aborting."
     sys.exit(1)
 
-def create_pdf(book):
-    annots = book.annotations
-    outpdf = pyPdf.PdfFileWriter()
-    for i, page in enumerate(book.pdf.pages):
-        while annots and annots[0].page == i:
-            annots[0].write_to_pdf(page, outpdf)
-            annots.pop(0)
-        outpdf.addPage(page)
-    return outpdf
-
 def main(path):
     reader = Reader(path)
     book = select_book(reader.books)
     
-    outpdf = create_pdf(book)
     outfn = os.path.splitext(os.path.basename(book.file))[0] + '.annot.pdf'
     userfn = u_raw_input("Enter output file name [%s]: " % outfn)
     if userfn:
         outfn = userfn
-    outpdf.write(open(outfn, 'w'))
+    book.write_annotated_pdf(open(outfn, 'w'))
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:

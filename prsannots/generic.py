@@ -16,6 +16,19 @@ HIGHLIGHT, HIGHLIGHT_TEXT, HIGHLIGHT_DRAWING = 10, 11, 12
 def intersection(a, b):
     return (max(a[0], b[0]), max(a[1], b[1]), min(a[2], b[2]), min(a[3], b[3]))
 
+class OneToOneMap(object):
+    
+    def __init__(self, npages):
+        self.npages = npages
+    
+    def __len__(self):
+        return self.npages
+    
+    def __getitem__(self, num):
+        if num < 0 or num >= self.npages:
+            raise IndexError
+        return (num, None)
+
 class Reader(object):
     
     def __init__(self, path):
@@ -67,6 +80,23 @@ class Book(object):
         if page not in self._page_texts:
             self._page_texts[page] = PageText(self.pdf_layout(page))
         return self._page_texts[page]
+    
+    def write_annotated_pdf(self, outfd, pdf=None, dice_map=None):
+        if pdf is None:
+            pdf = self.pdf
+        if dice_map is None:
+            dice_map = OneToOneMap(len(self.pdf.pages))
+        
+        outpdf = pyPdf.PdfFileWriter()
+        j = k = 0
+        for i, page in enumerate(pdf.pages):
+            while j < len(dice_map) and dice_map[j][0] == i:
+                while k < len(self.annotations) and self.annotations[k].page == j:
+                    self.annotations[k].write_to_pdf(page, outpdf, dice_map[j][1])
+                    k += 1
+                j += 1
+            outpdf.addPage(page)
+        outpdf.write(outfd)
 
 
 class Freehand(object):
