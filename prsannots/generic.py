@@ -7,6 +7,7 @@ import os
 from xml.dom import minidom
 import svglib
 from StringIO import StringIO
+import hashlib
 import pyPdf
 from pagetext import PageText, get_layouts, NoSubstringError, MultipleSubstringError
 from pdfannotation import highlight_annotation, text_annotation, add_annotation
@@ -42,6 +43,12 @@ class Reader(object):
     
     def _get_books(self):
         raise NotImplementedError, "Subclasses must implement a _get_books() method."
+    
+    def __getitem__(self, filepath):
+        for b in self.books:
+            if b.file == filepath:
+                return b
+        raise KeyError
 
 
 class Book(object):
@@ -66,6 +73,13 @@ class Book(object):
     
     def _get_annotations(self):
         raise NotImplementedError, "Subclasses must implement a _get_annotations() method."
+    
+    @property
+    def hash(self):
+        if not hasattr(self, '_hash'):
+            hashes = [ann.hash for ann in self.annotations]
+            self._hash = hashlib.md5(''.join(hashes)).digest()
+        return self._hash
     
     @property
     def pdf(self):
@@ -119,6 +133,10 @@ class Freehand(object):
             for attr in ('width', 'height'):
                 self._svg.setAttribute(attr, drawing.getAttribute(attr))
         return self._svg
+    
+    @property
+    def hash(self):
+        return hashlib.md5(str(self.crop) + str(self.orientation) + self.svg.toxml('utf-8')).digest()
     
     @property
     def pdf(self):
@@ -187,6 +205,10 @@ class Highlight(object):
             return text.childNodes[0].toxml() + self.message
         if self.content_type is HIGHLIGHT_DRAWING:
             return "Can't handle drawings yet.  (Sorry.)" + self.message
+    
+    @property
+    def hash(self):
+        return hashlib.md5(str(self.page) + str(self.bboxes) + unicode(self.text_content)).digest()
     
     def write_to_pdf(self, page, outpdf, crop=None):
         if crop is None:
