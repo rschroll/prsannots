@@ -179,21 +179,28 @@ class Highlight(object):
         self.book = book
         self.page = int(page)
         self.message = ''
-        if isinstance(area, basestring):
-            try:
-                self.bboxes = self.book.page_text(self.page).box_substring(area, strict)
-            except NoSubstringError:
-                self.message = '\n\nThis note was supposed to be attached to the following ' \
-                               'text, which was not found on this page.\n' + area
-                self.bboxes = None
-            except MultipleSubstringError:
-                self.message = '\n\nThis note was supposed to be attached to the following ' \
-                               'text, which was found multiple times on this page.\n' + area
-                self.bboxes = None
-        else:
-            self.bboxes = area
+        self.area = area
+        self.strict = strict
         self.content_type = content_type
         self.content = content
+    
+    @property
+    def bboxes(self):
+        if not hasattr(self, '_bboxes'):
+            if isinstance(self.area, basestring):
+                try:
+                    self._bboxes = self.book.page_text(self.page).box_substring(self.area, self.strict)
+                except NoSubstringError:
+                    self.message = '\n\nThis note was supposed to be attached to the following ' \
+                                   'text, which was not found on this page.\n' + self.area
+                    self._bboxes = None
+                except MultipleSubstringError:
+                    self.message = '\n\nThis note was supposed to be attached to the following ' \
+                                   'text, which was found multiple times on this page.\n' + self.area
+                    self._bboxes = None
+            else:
+                self._bboxes = self.area
+        return self._bboxes
     
     @property
     def text_content(self):
@@ -208,7 +215,7 @@ class Highlight(object):
     
     @property
     def hash(self):
-        return hashlib.md5(str(self.page) + str(self.bboxes) + unicode(self.text_content)).digest()
+        return hashlib.md5(str(self.page) + unicode(self.area) + unicode(self.text_content)).digest()
     
     def write_to_pdf(self, page, outpdf, crop=None):
         if crop is None:
