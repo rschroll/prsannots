@@ -4,8 +4,9 @@
 # This file is part of prsannots and is distributed under the terms of
 # the LGPL license.  See the file COPYING for full details.
 
+import os
 from subprocess import call
-from tempfile import TemporaryFile
+from tempfile import mkstemp
 from pyPdf.pdf import PdfFileWriter, PdfFileReader, PageObject, \
                       NameObject, RectangleObject
 from generic import intersection
@@ -58,12 +59,37 @@ def write_pdf(outpdf, filename, gs=False):
     """
     
     if gs:
-        tmp = TemporaryFile()
+        info = outpdf._info.getObject()
+        title = info.get('/Title', None)
+        author = info.get('/Author', None)
+        
+        tmpfd, tmpfn = mkstemp()
+        tmp = os.fdopen(tmpfd, 'wb')
         outpdf.write(tmp)
-        tmp.seek(0)
-        retcode = call(['gs', '-sDEVICE=pdfwrite', '-dCompatibility=1.4', '-dNOPAUSE',
-                        '-dQUIET', '-dBATCH', '-sOutputFile=%s' % filename, '-'], stdin=tmp)
         tmp.close()
+        callarr = ['gs', '-sDEVICE=pdfwrite', '-dCompatibility=1.4', '-dNOPAUSE',
+                   '-dQUIET', '-dBATCH', '-sOutputFile=%s' % filename, tmpfn]
+        
+        if title or author:
+            # See http://milan.kupcevic.net/ghostscript-ps-pdf/#marks
+            # Note that the marks have to come in a different file; we can't
+            # just send them both in through stdin.  This is why we have to
+            # fuss around with mkstemp.
+            markfd, markfn = mkstemp()
+            mark = os.fdopen(markfd, 'w')
+            mark.write('[')
+            title and mark.write(' /Title (%s)\n' % title.encode('utf-8'))
+            author and mark.write(' /Author (%s)\n' % author.encode('utf-8'))
+            mark.write(' /DOCINFO pdfmark\n')
+            mark.close()
+            callarr.append(markfn)
+        else:
+            markfn = None
+        
+        retcode = call(callarr)
+        os.unlink(tmpfn)
+        if markfn is not None:
+            os.unlink(markfn)
         if retcode == 0:
             return
         print "Error code %i returned by Ghostscript.  Trying direct output." % retcode
