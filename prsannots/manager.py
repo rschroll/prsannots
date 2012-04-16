@@ -135,7 +135,8 @@ class Manager(object):
             self.settings[k] = v
         self.update_settings(**kw)
     
-    def add_pdf(self, filename, dice_pdf=None, dice_map=None, infix=None, reader_dir=None, gs=None):
+    def add_pdf(self, filename, dice_pdf=None, dice_map=None, title=None,
+                author=None, infix=None, reader_dir=None, gs=None):
         """ Add a PDF file to the reader, to be managed by this manager.
         
         Inputs: filename    The location on the computer of the PDF file.
@@ -147,6 +148,14 @@ class Manager(object):
                 dice_map    The dice map describing how the original PDF
                             was cut up for the reader.  None indicates
                             no dicing occured.
+                
+                title       The to be given to the PDF file put on the
+                            reader.  If None, use the original file's
+                            title, if it exists.
+                
+                author      The author of the PDF file put on the reader.
+                            If None, use the original file's author,
+                            if it exists.
                 
                 infix       The annotated PDF will be written back to the
                             filesystem with the name filename.infix.pdf.
@@ -184,7 +193,27 @@ class Manager(object):
                     num = 0
             readerfn = '.'.join((parts[0], str(num), parts[-1]))
         
+        orig_pdf = pyPdf.PdfFileReader(open(filename, 'rb'))
+        # If we're changing the title or author, we need to rewrite the
+        # whole PDF file.
+        if dice_pdf is None and (title is not None or author is not None):
+            dice_pdf = pyPdf.PdfFileWriter()
+            for page in orig_pdf.pages:
+                dice_pdf.addPage(page)
+        
         if dice_pdf is not None:
+            if title is not None:
+                title = pyPdf.generic.TextStringObject(title)
+            else:
+                title = orig_pdf.documentInfo['/Title']
+            if author is not None:
+                author = pyPdf.generic.TextStringObject(author)
+            else:
+                author = orig_pdf.documentInfo['/Author']
+            
+            info = dice_pdf._info.getObject()
+            info.update({pyPdf.generic.NameObject('/Title'): title,
+                         pyPdf.generic.NameObject('/Author'): author})
             write_pdf(dice_pdf, readerfn, gs)
         else:
             shutil.copy(filename, readerfn)
@@ -299,5 +328,3 @@ class Manager(object):
 
 ## Todo
 # Test if file we're adding is already there
-# Set title/author when adding files
-#  - Can we preserve them in PDFs?
