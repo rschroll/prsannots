@@ -33,7 +33,7 @@ class Manager(object):
     be retrieved.
     """
     
-    _base_settings = { 'infix': 'annots', 'reader_dir': 'download', 'gs': False}
+    _base_settings = { 'infix': 'annot', 'reader_dir': 'download', 'gs': False}
     _id_file = '.prsannots'
     
     def __init__(self):
@@ -172,6 +172,8 @@ class Manager(object):
         """
         
         filename = os.path.abspath(filename)
+        if not os.path.exists(filename):
+            raise IOError, "File %s does not exist." % filename
         basename = os.path.basename(filename)
         if infix is None:
             infix = self.settings['infix']
@@ -202,18 +204,24 @@ class Manager(object):
                 dice_pdf.addPage(page)
         
         if dice_pdf is not None:
+            info_dict = {}
             if title is not None:
-                title = pyPdf.generic.TextStringObject(title)
+                info_dict[pyPdf.generic.NameObject('/Title')] = pyPdf.generic.TextStringObject(title)
             else:
-                title = orig_pdf.documentInfo['/Title']
+                try:
+                    info_dict[pyPdf.generic.NameObject('/Title')] = orig_pdf.documentInfo['/Title']
+                except KeyError:
+                    pass
             if author is not None:
-                author = pyPdf.generic.TextStringObject(author)
+                info_dict[pyPdf.generic.NameObject('/Author')] = pyPdf.generic.TextStringObject(author)
             else:
-                author = orig_pdf.documentInfo['/Author']
+                try:
+                    info_dict[pyPdf.generic.NameObject('/Author')] = orig_pdf.documentInfo['/Author']
+                except KeyError:
+                    pass
             
             info = dice_pdf._info.getObject()
-            info.update({pyPdf.generic.NameObject('/Title'): title,
-                         pyPdf.generic.NameObject('/Author'): author})
+            info.update(info_dict)
             write_pdf(dice_pdf, readerfn, gs)
         else:
             shutil.copy(filename, readerfn)
@@ -300,6 +308,8 @@ class Manager(object):
                 delete_from_reader  Whether to delete the PDF file from
                                     the reader.
         
+        Output: A Boolean indicating whether the file was removed from the manager.
+        
         Be sure to call save() sometime after this method.
         """
         
@@ -319,6 +329,9 @@ class Manager(object):
                 except OSError:
                     pass
             del(self.library[reader_file])
+            return True
+        
+        return False
     
     def clean(self):
         """ Remove files from the manager that are no longer on the Reader. """
