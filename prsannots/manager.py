@@ -96,6 +96,21 @@ class Manager(object):
                 return True
         return False
     
+    def load_mount(self, mount):
+        """ Load the reader at mount, if there is a configuration file for
+        it.  Returns True if successful, False otherwise.
+        """
+        
+        mount = os.path.abspath(mount)
+        try:
+            for line in open(os.path.join(mount, self._id_file), 'r'):
+                fn = os.path.join(CONFIG_DIR, line + CONFIG_EXT)
+                if os.path.exists(fn):
+                    return self.load_if_mounted(fn)
+        except IOError:
+            pass
+        return False
+    
     def save(self):
         """ Save the configuration. """
         
