@@ -1,0 +1,238 @@
+#!/usr/bin/env python
+#
+# Copyright 2012 Robert Schroll
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this program.  If not, see
+# <http://www.gnu.org/licenses/>.
+
+__version__ = "0.1"
+__license__ = "LGPL 3"
+__author__ = "Robert Schroll"
+__date__ = "2012-04-16"
+
+import os
+import sys
+import pyPdf
+
+from Tkinter import *
+import tkMessageBox
+import tkFileDialog
+
+from prsannots.manager import Manager, NotMountedError
+
+class EntryHint(Entry):
+    
+    def __init__(self, master, hint='', **kw):
+        self.var = StringVar()
+        self.hint = hint
+        Entry.__init__(self, master, textvariable=self.var, **kw)
+        
+        self.bind('<FocusIn>', self.on_focus)
+        self.bind('<FocusOut>', self.on_blur)
+        self.on_blur(event=None)
+    
+    def set(self, value):
+        self.var.set(value)
+        if self.focus_lastfor() == self:
+            self.on_focus(None)
+        else:
+            self.on_blur(None)
+    
+    def get(self):
+        if self.var.get() == self.hint:
+            return ''
+        return self.var.get()
+    
+    def on_focus(self, event):
+        self.config(foreground='black')
+        if self.var.get() == self.hint:
+            self.var.set('')
+    
+    def on_blur(self, event):
+        if self.var.get():
+            self.config(foreground='black')
+        else:
+            self.config(foreground='gray', background='white')
+            self.var.set(self.hint)
+
+class SpinboxValue(Spinbox):
+    
+    def __init__(self, master, **kw):
+        self.var = StringVar()
+        Spinbox.__init__(self, master, textvariable=self.var, **kw)
+    
+    def set(self, value):
+        self.var.set(value)
+
+class Main(Frame):
+    
+    def __init__(self, master, manager):
+        Frame.__init__(self, master)
+        self.manager = manager
+        self.needs_save = False
+        self.master.protocol('WM_DELETE_WINDOW', self.close)
+        self._n_sync = 1  # We don't know this right now.
+        
+        self.file_entry = EntryHint(self, width=40, hint='File Name')
+        self.file_entry.grid(row=0, column=0, columnspan=6)
+        self.file_button = Button(self, text='...', command=self.load_file)
+        self.file_button.grid(row=0, column=6, sticky=W)
+        
+        Label(self, text="Dice PDF into").grid(row=1, column=0, columnspan=2, sticky=W)
+        self.ncols_entry = SpinboxValue(self, from_=1, to=10, width=2, justify=RIGHT)
+        self.ncols_entry.grid(row=1, column=2, sticky=E)
+        Label(self, text="columns").grid(row=1, column=3, sticky=W)
+        self.nrows_entry = SpinboxValue(self, from_=1, to=10, width=2, justify=RIGHT)
+        self.nrows_entry.grid(row=1, column=4, sticky=E)
+        Label(self, text="rows").grid(row=1, column=5, sticky=W)
+        
+        Label(self, text="Overlap fraction").grid(row=2, column=0, columnspan=2, sticky=W)
+        self.olh_entry = SpinboxValue(self, from_=0, to=0.2, increment=0.01, width=4, justify=RIGHT)
+        self.olh_entry.grid(row=2, column=2, sticky=E)
+        Label(self, text="horizontal").grid(row=2, column=3, sticky=W)
+        self.olv_entry = SpinboxValue(self, from_=0, to=0.2, increment=0.01, width=4, justify=RIGHT)
+        self.olv_entry.grid(row=2, column=4, sticky=E)
+        Label(self, text="vertical").grid(row=2, column=5, sticky=W)
+        
+        Label(self, text="Title").grid(row=3, column=0, sticky=E)
+        self.title_entry = EntryHint(self, hint='Title')
+        self.title_entry.grid(row=3, column=1, columnspan=5, sticky=E+W)
+        
+        Label(self, text="Author").grid(row=4, column=0, sticky=E)
+        self.author_entry = EntryHint(self, hint='Author')
+        self.author_entry.grid(row=4, column=1, columnspan=5, sticky=E+W)
+        
+        self.sync_button = Button(self, text='Sync %i files' % self._n_sync, command=self.sync)
+        self.sync_button.grid(row=5, column=0, columnspan=5, sticky=W)
+        if not self._n_sync:
+            self.sync_button.grid_remove()
+        self.close_button = Button(self, text='Close', command=self.close)
+        self.close_button.grid(row=5, column=5, sticky=E)
+        self.add_button = Button(self, text='Add', command=self.add)
+        self.add_button.grid(row=5, column=6, pady=2)
+        
+        self.status = Label(self, text="", bd=1, relief=SUNKEN, anchor=W)
+        self.status.grid(row=6, column=0, columnspan=7, sticky=E+W)
+        
+        self.reset()
+    
+    def reset(self):
+        self.file_entry.set('')
+        self.title_entry.set('')
+        self.author_entry.set('')
+        self.ncols_entry.set(1)
+        self.nrows_entry.set(1)
+        self.olh_entry.set(0.05)
+        self.olv_entry.set(0.05)
+        self.master.focus()
+    
+    def load_file(self):
+        filename = tkFileDialog.askopenfilename(parent=root, title="Choose PDF file to load",
+                    filetypes=[('PDF files', '.pdf'), ('All files', '.*')])
+        self.prep_file(filename)
+    
+    def prep_file(self, filename):
+        if filename is None:
+            filename = ''
+        self.file_entry.set(filename)
+        try:
+            pdf = pyPdf.PdfFileReader(open(filename, 'rb'))
+            self.title_entry.set(pdf.documentInfo.get('/Title', ''))
+            self.author_entry.set(pdf.documentInfo.get('/Author', ''))
+        except (IOError, pyPdf.utils.PdfReadError):
+            self.file_entry.config(background='#ff9933')
+            self.status.config(text="Warning: Having trouble reading PDF file")
+        else:
+            self.file_entry.config(background='white')
+            self.status.config(text="Ready to add file to library")
+    
+    def add(self):
+        try:
+            self.manager.add_diced_pdf(self.file_entry.get(),
+                                       (int(self.ncols_entry.get()), int(self.nrows_entry.get()),
+                                        (float(self.olh_entry.get()), float(self.olv_entry.get()))),
+                                       title=self.title_entry.get(), author=self.author_entry.get())
+        except (ValueError, IOError, pyPdf.utils.PdfReadError), e:
+            tkMessageBox.showerror(title="Add file",
+                                   message="Could not add file to library.\n\n" + str(e))
+            self.status.config(text="Error adding file to library")
+        else:
+            self.reset()
+            self.needs_save = True
+            self.status.config(text="File added to library")
+    
+    def close(self):
+        if self.needs_save:
+            self.manager.save()
+        self.master.destroy()
+    
+    def sync(self):
+        self.sync_button.config(text="Syncing...", relief=SUNKEN)
+        self.master.update_idletasks()  # Update the sync_button text
+        num = self.manager.sync()
+        self.status.config(text="Synced %i files" % num)
+        self._n_sync = 0
+        self.sync_button.grid_remove()
+        self.needs_save = True
+
+if __name__ == '__main__':
+    
+    m = Manager()
+    root = Tk()
+    main = Main(root, m)
+    main.pack(padx=2, pady=2)
+    root.resizable(width=False, height=False)
+    root.title("PRS Annotation Manager")
+    quit_ = False
+    
+    if not m.load_mounted_reader():
+        root.withdraw()  # Don't show root window yet.
+        mount = tkFileDialog.askdirectory(title="Select mount point of reader", mustexist=True)
+        if not mount:
+            quit_ = True
+        else:
+            if m.load_mount(mount):
+                if tkMessageBox.askyesno(title="Adjust settings?",
+                        message="The settings indicate that this reader is" +
+                                "usually mounted at %s.\n\n" % m.settings['mount'] +
+                                "Now it is mounted at %s.\n\n" % mount +
+                                "Adjust the settings?"):
+                    m.update_mount_setting()
+                    main.needs_save = True
+            else:
+                if tkMessageBox.askyesno(title="Create library?",
+                        message="There is no library on this computer for the" +
+                                "reader at %s.\n\n" % mount +
+                                "Create a new library?"):
+                    try:
+                        m.new(mount)
+                    except (NotMountedError, IOError), e:
+                        tkMessageBox.showerror(title="Create library",
+                            message="Could not create library.\n\n" + str(e))
+                        quit_ = True
+                    else:
+                        main.needs_save = True
+                else:  # No to create library
+                    quit_ = True
+        if quit_:
+            root.destroy()
+        else:
+            root.deiconify()  # Now show root
+    
+    if len(sys.argv) > 1:
+        filename = os.path.abspath(sys.argv[1])
+    if os.path.exists(filename):
+        main.prep_file(filename)
+    
+    root.mainloop()
