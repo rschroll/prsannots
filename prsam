@@ -50,6 +50,18 @@ import os
 import sys
 from optparse import OptionParser
 from prsannots.manager import Manager, NotMountedError
+try:
+    from gi.repository import Notify
+    if not Notify.init('PRS Annotation Manager'):
+        raise ImportError
+except ImportError:
+    notify = lambda *args: None
+else:
+    notification = Notify.Notification.new("PRS Annotation Manager", None, None)
+    notification.set_hint_int32('transient', 1)
+    def notify(message):
+        notification.update("PRS Annotation Manager", message, None)
+        notification.show()
 
 def print_err_exit(message):
     print >>sys.stderr, message
@@ -149,7 +161,16 @@ def do_ls(args, options):
 
 def do_sync(args, options):
     m = get_manager()
-    m.sync()
+    if options.notify:
+        notify("Beginning sync")
+    num = m.sync()
+    if options.notify:
+        if num == 0:
+            notify("Already up-to-date")
+        elif num == 1:
+            notify("Updated 1 annotated file")
+        else:
+            notify("Updated %i annotated files" % num)
     if options.clean:
         m.clean()
     m.save()
@@ -223,6 +244,8 @@ def main(args):
         set_usage_description(USAGE[6])
         parser.add_option('-c', '--clean', action='store_true', default=False,
                           help='clean files from library')
+        parser.add_option('-q', '--quiet', action='store_false', default=True, dest='notify',
+                          help="don't notify when sync is finished")
         function = do_sync
         nargs = 0
     elif command == 'clean':
