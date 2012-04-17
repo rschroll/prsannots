@@ -8,6 +8,7 @@ import sys
 import glob
 import uuid
 import shutil
+import subprocess
 try:
     import cPickle as pickle
 except ImportError:
@@ -25,6 +26,16 @@ if not os.path.isdir(CONFIG_DIR):
     os.makedirs(CONFIG_DIR)
 CONFIG_EXT = '.prc'
 
+def test_gs():
+    """ Test if Ghostscript is installed with the pdfwrite device. """
+    try:
+        output = subprocess.check_output(['gs', '-h'])
+    except (OSError, subprocess.CallProcessError):
+        return False
+    if output.find('pdfwrite') == -1:
+        return False
+    return True
+
 class NotMountedError(Exception):
     pass
 
@@ -33,7 +44,7 @@ class Manager(object):
     be retrieved.
     """
     
-    _base_settings = { 'infix': 'annot', 'reader_dir': 'download', 'gs': False}
+    _base_settings = { 'infix': 'annot', 'reader_dir': 'download', 'gs': None}
     _id_file = '.prsannots'
     
     def __init__(self):
@@ -146,6 +157,8 @@ class Manager(object):
         fd.write(self.settings['id'] + '\n')
         fd.close()
         
+        if self._base_settings['gs'] is None:
+            self._base_settings['gs'] = test_gs()
         for k,v in self._base_settings.items():
             self.settings[k] = v
         self.update_settings(**kw)
