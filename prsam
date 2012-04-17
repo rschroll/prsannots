@@ -88,10 +88,14 @@ def print_err_exit(message):
     print >>sys.stderr, message
     sys.exit(1)
 
-def get_manager():
+def get_manager(mount=None):
     m = Manager()
-    if m.load_mounted_reader():
-        return m
+    if mount is None:
+        if m.load_mounted_reader():
+            return m
+    else:
+        if m.load_mount(mount):
+            return m
     print_err_exit("Could not find reader.\n"
                    "Make sure it is mounted and that you have run 'prsam init <mount>'.")
 
@@ -103,8 +107,6 @@ def config_options(options):
         config['reader_dir'] = options.readerdir
     if options.gs is not None:
         config['gs'] = options.gs
-    if options.mount is not None:
-        config['mount'] = options.mount
     return config
 
 def do_init(args, options):
@@ -114,7 +116,6 @@ def do_init(args, options):
         print_err_exit("Library already exists for %s.\n" % mount +
                        "Run with -f to force the creation of a new library.")
     
-    options.mount = None
     try:
         m.new(mount, **config_options(options))
     except NotMountedError, e:
@@ -122,10 +123,18 @@ def do_init(args, options):
     m.save()
 
 def do_config(args, options):
-    m = get_manager()
+    m = get_manager(options.mount)
     config = config_options(options)
+    
+    updated = False
     if config:
         m.update_settings(**config)
+        updated = True
+    if options.update_mount:
+        m.update_mount_setting()
+        updated = True
+    
+    if updated:
         m.save()
     else:
         print "Library Settings:"
@@ -133,7 +142,7 @@ def do_config(args, options):
             print " %10s  %s" % (k, v)
 
 def do_add(args, options):
-    m = get_manager()
+    m = get_manager(options.mount)
     if options.dice is not None:
         try:
             parts = options.dice.split('+', 1)
@@ -158,7 +167,7 @@ def do_add(args, options):
     m.save()
 
 def do_remove(args, options):
-    m = get_manager()
+    m = get_manager(options.mount)
     filename = os.path.abspath(args[0])
     reader_file = orig_file = error = None
     if os.path.exists(filename):
@@ -176,12 +185,12 @@ def do_remove(args, options):
     m.save()
 
 def do_ls(args, options):
-    m = get_manager()
+    m = get_manager(options.mount)
     for k in m.library:
         print k
 
 def do_sync(args, options):
-    m = get_manager()
+    m = get_manager(options.mount)
     if options.notify:
         notify("Beginning sync")
     num = m.sync()
@@ -197,7 +206,7 @@ def do_sync(args, options):
     m.save()
 
 def do_clean(args, options):
-    m = get_manager()
+    m = get_manager(options.mount)
     m.clean()
     m.save()
 
@@ -209,6 +218,7 @@ def main(args):
         command = ''
     
     parser = OptionParser()
+    parser.add_option('-m', '--mount', metavar='DIR', help='the mount point of the reader')
     
     def set_usage_description(string):
         parts = string.split('\n\n', 1)
@@ -229,6 +239,7 @@ def main(args):
     
     if command == 'init':
         set_usage_description(USAGE[1])
+        parser.remove_option('--mount')
         parser.add_option('-f', '--force', action='store_true', default=False,
                           help='initialize a new library even if one already exists')
         add_config_options()
@@ -237,7 +248,8 @@ def main(args):
     elif command == 'config':
         set_usage_description(USAGE[2])
         add_config_options()
-        parser.add_option('--mount', help='the mount point of the reader')
+        parser.add_option('--update-mount', action='store_true', default=False,
+                          help='update the stored mount point to that specified by --mount')
         function = do_config
         nargs = 0
     elif command == 'add':
@@ -275,6 +287,7 @@ def main(args):
         nargs = 0
     else:
         set_usage_description(USAGE[0])
+        parser.remove_option('--mount')
         nargs = -1 # Always go to print_usage below.
     
     options, args = parser.parse_args(args)
