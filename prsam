@@ -162,8 +162,8 @@ def do_remove(args, options):
     filename = os.path.abspath(args[0])
     reader_file = orig_file = error = None
     if os.path.exists(filename):
-        if filename.startswith(m.settings['mount']):
-            reader_file = filename[len(m.setting['mount']) + 1:] # + 1 for separator
+        if filename.startswith(m.mount):
+            reader_file = filename[len(m.mount) + 1:] # + 1 for separator
         else:
             orig_file = filename
     else:

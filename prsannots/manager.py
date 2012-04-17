@@ -51,11 +51,36 @@ class Manager(object):
         self.settings = {}
         self.library = {}
         self.reader = None
+        self._mount = None
     
     def _ensure_base_settings(self):
         for key in self._base_settings:
             if key not in self.settings:
                 self.settings[key] = self._base_settings[key]
+    
+    @property
+    def mount(self):
+        """ The mount point is usually stored in self.settings, but we
+        want to be able to mount somewhere else if needed.
+        """
+        
+        if self._mount is not None:
+            return self._mount
+        return self.settings.get('mount', None)
+    
+    @mount.setter
+    def mount(self, value):
+        """ Set to None to use self.settings['mount']. """
+        self._mount = value
+    
+    def update_mount_setting(self):
+        """ Update the mount point in the settings to the current mount
+        point.  Be sure to call save() sometime after this method.
+        """
+        
+        if self.mount is not None:  # Before loading
+            self.settings['mount'] = self.mount
+            self.mount = None
     
     def load(self, filename):
         """ Load the configuration file specified by filename.  Note that
@@ -69,7 +94,7 @@ class Manager(object):
         fd.close()
         self._ensure_base_settings()
         try:
-            self.reader = Reader(self.settings['mount'])
+            self.reader = Reader(self.mount)
         except IOError:  # Check this
             pass
     
@@ -81,13 +106,13 @@ class Manager(object):
         
         fd = open(filename, 'rb')
         self.settings = pickle.load(fd)
-        id_file = os.path.join(self.settings['mount'], self._id_file)
+        id_file = os.path.join(self.mount, self._id_file)
         if os.path.exists(id_file):
             if self.settings['id']+'\n' in open(id_file, 'r'):
                 self.library = pickle.load(fd)
                 fd.close()
                 self._ensure_base_settings()
-                self.reader = Reader(self.settings['mount'])
+                self.reader = Reader(self.mount)
                 return True
         fd.close()
         self.settings = {}
@@ -109,17 +134,28 @@ class Manager(object):
     
     def load_mount(self, mount):
         """ Load the reader at mount, if there is a configuration file for
-        it.  Returns True if successful, False otherwise.
+        it, even if that file suggests a different mount point.  Returns
+        True if successful, False otherwise.
         """
         
         mount = os.path.abspath(mount)
+        self.mount = mount
         try:
-            for line in open(os.path.join(mount, self._id_file), 'r'):
+            for line in open(os.path.join(mount, self._id_file), 'r').read().splitlines():
                 fn = os.path.join(CONFIG_DIR, line + CONFIG_EXT)
                 if os.path.exists(fn):
-                    return self.load_if_mounted(fn)
+                    fd = open(fn, 'rb')
+                    self.settings = pickle.load(fd)
+                    self.library = pickle.load(fd)
+                    fd.close()
+                    self._ensure_base_settings()
+                    self.reader = Reader(self.mount)
+                    if self.settings['mount'] == self.mount:
+                        self.mount = None  # Use self.settings
+                    return True
         except IOError:
             pass
+        self.mount = None
         return False
     
     def save(self):
@@ -210,7 +246,7 @@ class Manager(object):
         if gs is None:
             gs = self.settings['gs']
         
-        readerfn = os.path.join(self.settings['mount'], reader_dir, basename)
+        readerfn = os.path.join(self.mount, reader_dir, basename)
         while os.path.exists(readerfn):
             parts = readerfn.split('.', 2)
             if len(parts) == 2:
@@ -254,7 +290,7 @@ class Manager(object):
         else:
             shutil.copy(filename, readerfn)
         
-        relfn = readerfn[len(self.settings['mount']) + 1:]  # + 1 for separator
+        relfn = readerfn[len(self.mount) + 1:]  # + 1 for separator
         self.library[relfn] = { 'filename': filename, 'infix': infix, 'annhash': 0, 'dice_map': dice_map }
     
     def add_diced_pdf(self, filename, diceargs, **kw):
@@ -353,7 +389,7 @@ class Manager(object):
         if reader_file in self.library:
             if delete_from_reader:
                 try:
-                    os.unlink(os.path.join(self.settings['mount'], reader_file))
+                    os.unlink(os.path.join(self.mount, reader_file))
                 except OSError:
                     pass
             del(self.library[reader_file])
@@ -364,7 +400,7 @@ class Manager(object):
     def clean(self):
         """ Remove files from the manager that are no longer on the Reader. """
         for filepath in self.library.keys():
-            if not os.path.exists(os.path.join(self.settings['mount'], filepath)):
+            if not os.path.exists(os.path.join(self.mount, filepath)):
                 self.delete(filepath)
 
 ## Todo
