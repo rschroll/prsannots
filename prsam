@@ -1,0 +1,245 @@
+#!/usr/bin/env python
+USAGE = """
+prsam [init|config|add|remove|ls|sync|clean]
+
+The PRS Annotation Manager (prsam) manages a library of PDF files for
+you to annotate on your PRS-T1 reader.  When you add a file to the
+library, prsam will copy it over to your reader.  If you desire, it can
+"dice" the PDF file, splitting each page into several for better reading.
+(This is particularly useful for multi-column PDFs.)  After you annotate
+the file on your reader, prsam will, when your run the "sync" command,
+copy the annotated file back to your computer, placing it next to the
+original.
+
+prsam consists of a group of subcommands, listed above.  For more
+information on any of them, run 'prsam <subcommand> --help'.
+~~
+prsam init [options] <mount>
+
+Initialize a library for a reader mounted at <mount>.
+~~
+prsam config [options]
+
+Set the configuration options for the library.  With no options
+specified, display the current configuration.
+~~
+prsam add [options] <file>
+
+Add the specified file to the library.
+~~
+prsam remove [options] <file>
+
+Remove the specified file from the library.  Either the file on the
+computer or on the reader may be specified.  A file on the reader may
+be specified with its path from the mount point.
+~~
+prsam ls
+
+List the files on the reader currently in the library.
+~~
+prsam sync [options]
+
+Update all annotated PDFs.
+~~
+prsam clean
+
+Remove files from the library that are no longer on the reader.
+""".strip().split('\n~~\n')
+
+import os
+import sys
+from optparse import OptionParser
+from prsannots.manager import Manager, NotMountedError
+
+def print_err_exit(message):
+    print >>sys.stderr, message
+    sys.exit(1)
+
+def get_manager():
+    m = Manager()
+    if m.load_mounted_reader():
+        return m
+    print_err_exit("Could not find reader.\n"
+                   "Make sure it is mounted and that you have run 'prsam init <mount>'.")
+
+def config_options(options):
+    config = {}
+    if options.infix is not None:
+        config['infix'] = options.infix
+    if options.readerdir is not None:
+        config['reader_dir'] = options.readerdir
+    if options.gs is not None:
+        config['gs'] = options.gs
+    if options.mount is not None:
+        config['mount'] = options.mount
+    return config
+
+def do_init(args, options):
+    mount = os.path.abspath(args[0])
+    m = Manager()
+    if not options.force and m.load_mount(mount):
+        print_err_exit("Library already exists for %s.\n" % mount +
+                       "Run with -f to force the creation of a new library.")
+    
+    options.mount = None
+    try:
+        m.new(mount, **config_options(options))
+    except NotMountedError, e:
+        print_err_exit(e)
+    m.save()
+
+def do_config(args, options):
+    m = get_manager()
+    config = config_options(options)
+    if config:
+        m.update_settings(**config)
+        m.save()
+    else:
+        print "Library Settings:"
+        for k,v in m.settings.items():
+            print " %10s  %s" % (k, v)
+
+def do_add(args, options):
+    m = get_manager()
+    if options.dice is not None:
+        try:
+            parts = options.dice.split('+', 1)
+            ncols, nrows = map(int, parts[0].split('x', 1))
+            if len(parts) == 2:
+                overlap = map(float, parts[1].split('x', 1))
+                dice = (ncols, nrows, overlap)
+            else:
+                dice = (ncols, nrows)
+        except ValueError:
+            print_err_exit("Could not understand dice setting: %s\n" % options.dice +
+                           'Dice setting must be of form "<c>x<r>", "<c>x<r>+<o>", or "<c>x<r>+<o>x<o>".')
+        finally:
+            func = lambda **kw: m.add_diced_pdf(args[0], dice, **kw)
+    else:
+        func = lambda **kw: m.add_pdf(args[0], **kw)
+    try:
+        func(title=options.title, author=options.author, infix=options.infix,
+             reader_dir=options.readerdir, gs=options.gs)
+    except IOError:
+        print_err_exit("Could not open file %s" % args[0])
+    m.save()
+
+def do_remove(args, options):
+    m = get_manager()
+    filename = os.path.abspath(args[0])
+    reader_file = orig_file = error = None
+    if os.path.exists(filename):
+        if filename.startswith(m.settings['mount']):
+            reader_file = filename[len(m.setting['mount']) + 1:] # + 1 for separator
+        else:
+            orig_file = filename
+    else:
+        if args[0] in m.library:
+            reader_file = args[0]
+        else:
+            error = True
+    if error or not m.delete(reader_file, orig_file, options.delete):
+        print_err_exit("The file %s is not currently in the library." % args[0])
+    m.save()
+
+def do_ls(args, options):
+    m = get_manager()
+    for k in m.library:
+        print k
+
+def do_sync(args, options):
+    m = get_manager()
+    m.sync()
+    if options.clean:
+        m.clean()
+    m.save()
+
+def do_clean(args, options):
+    m = get_manager()
+    m.clean()
+    m.save()
+
+def main(args):
+    if len(args) > 0 and args[0][0] != '-':
+        command = args[0]
+        args = args[1:]
+    else:
+        command = ''
+    
+    parser = OptionParser()
+    
+    def set_usage_description(string):
+        parts = string.split('\n\n', 1)
+        parser.set_usage(parts[0])
+        if len(parts) == 2:
+            parser.set_description(parts[1])
+    
+    def add_gs_options():
+        parser.add_option('--gs', action='store_true', dest='gs',
+                          help='run PDFs through Ghostscript before loading on reader')
+        parser.add_option('--no-gs', action='store_false', dest='gs',
+                          help="don't run PDFs through Ghostscript")
+    
+    def add_config_options():
+        parser.add_option('--infix', help='annotated PDFs are named filename.INFIX.pdf')
+        parser.add_option('--readerdir', metavar="DIR", help='directory on reader to store PDFs')
+        add_gs_options()
+    
+    if command == 'init':
+        set_usage_description(USAGE[1])
+        parser.add_option('-f', '--force', action='store_true', default=False,
+                          help='initialize a new library even if one already exists')
+        add_config_options()
+        function = do_init
+        nargs = 1
+    elif command == 'config':
+        set_usage_description(USAGE[2])
+        add_config_options()
+        parser.add_option('--mount', help='the mount point of the reader')
+        function = do_config
+        nargs = 0
+    elif command == 'add':
+        set_usage_description(USAGE[3])
+        parser.add_option('-d', '--dice', help='instructions on dicing the PDF into subpages.  '
+                          'Should be in the form "<c>x<r>[+<o>]" for <c> columns and <r> rows.  '
+                          'The overlap <o> is in percentage of the page size, and may be of the '
+                          'form "<h>x<v>" for different horizontal and vertical overlaps.')
+        parser.add_option('-t', '--title', help='the title of the PDF')
+        parser.add_option('-a', '--author', help='the author of the PDF')
+        add_config_options()
+        function = do_add
+        nargs = 1
+    elif command == 'remove':
+        set_usage_description(USAGE[4])
+        parser.add_option('-d', '--delete', action='store_true', default=False,
+                          help='delete file from reader')
+        function = do_remove
+        nargs = 1
+    elif command == 'ls':
+        set_usage_description(USAGE[5])
+        function = do_ls
+        nargs = 0
+    elif command == 'sync':
+        set_usage_description(USAGE[6])
+        parser.add_option('-c', '--clean', action='store_true', default=False,
+                          help='clean files from library')
+        function = do_sync
+        nargs = 0
+    elif command == 'clean':
+        set_usage_description(USAGE[7])
+        function = do_clean
+        nargs = 0
+    else:
+        set_usage_description(USAGE[0])
+        nargs = -1 # Always go to print_usage below.
+    
+    options, args = parser.parse_args(args)
+    
+    if len(args) != nargs:
+        parser.print_usage()
+        sys.exit(1)
+    
+    function(args, options)
+
+if __name__ == '__main__':
+    main(sys.argv[1:])
