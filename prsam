@@ -191,9 +191,26 @@ def do_ls(args, options):
 
 def do_sync(args, options):
     m = get_manager(options.mount)
+    
+    if options.list:
+        for fn in m.needing_sync:
+            print "Sync %s" % m.library[fn]['filename']
+        if not m.needing_sync:
+            print "No files need to be synced"
+        if options.clean:
+            print "Clean library"
+        return
+    
     if options.notify:
         notify("Beginning sync")
-    num = m.sync()
+    if options.verbose:
+        need_sync = m.needing_sync
+        for fn in need_sync:
+            print "Syncing %s ..." % m.library[fn]['filename']
+            m.sync_pdf(fn)
+        num = len(need_sync)
+    else:
+        num = m.sync()
     if options.notify:
         if num == 0:
             notify("Already up-to-date")
@@ -202,6 +219,8 @@ def do_sync(args, options):
         else:
             notify("Updated %i annotated files" % num)
     if options.clean:
+        if options.verbose:
+            print "Cleaning library ..."
         m.clean()
     m.save()
 
@@ -279,6 +298,10 @@ def main(args):
                           help='clean files from library')
         parser.add_option('-q', '--quiet', action='store_false', default=True, dest='notify',
                           help="don't notify when sync is finished")
+        parser.add_option('-v', '--verbose', action='store_true', default=False,
+                          help="output the file names as sync occurs.")
+        parser.add_option('-l', '--list', action='store_true', default=False,
+                          help="list the files that would have been synced, but don't sync")
         function = do_sync
         nargs = 0
     elif command == 'clean':
