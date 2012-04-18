@@ -112,18 +112,20 @@ class Main(Frame):
         Label(self, text="Author").grid(row=4, column=0, sticky=E)
         self.author_entry = EntryHint(self, hint='Author')
         self.author_entry.grid(row=4, column=1, columnspan=5, sticky=E+W)
+        self.add_button = Button(self, text='Add', command=self.add)
+        self.add_button.grid(row=3, column=6, rowspan=2, sticky=S)
+        
+        Frame(self, height=2, bd=1, relief=SUNKEN).grid(row=5, column=0, columnspan=7, sticky=E+W, pady=2)
         
         self.sync_button = Button(self, text='Sync %i files' % n_sync, command=self.sync)
-        self.sync_button.grid(row=5, column=0, columnspan=5, sticky=W)
+        self.sync_button.grid(row=6, column=0, columnspan=5, sticky=W)
         if not n_sync:
             self.sync_button.grid_remove()  # Bye Bye Bye
         self.close_button = Button(self, text='Close', command=self.close)
-        self.close_button.grid(row=5, column=5, sticky=E)
-        self.add_button = Button(self, text='Add', command=self.add)
-        self.add_button.grid(row=5, column=6, pady=2)
+        self.close_button.grid(row=6, column=5, columnspan=2, sticky=E)
         
         self.status = Label(self, text="", bd=1, relief=SUNKEN, anchor=W)
-        self.status.grid(row=6, column=0, columnspan=7, sticky=E+W)
+        self.status.grid(row=7, column=0, columnspan=7, sticky=E+W, pady=(2,0))
         
         self.reset()
     
