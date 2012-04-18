@@ -205,6 +205,8 @@ class Highlight(object):
     @property
     def text_content(self):
         if self.content_type is HIGHLIGHT:
+            if self.message:
+                return self.message[2:]  # Remove initial newlines
             return None
         if self.content_type is HIGHLIGHT_TEXT:
             doc = minidom.parse(os.path.join(self.book.reader.path, self.content))
