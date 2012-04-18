@@ -312,8 +312,33 @@ class Manager(object):
         outpdf, dice_map = dice(pdf, *diceargs)
         self.add_pdf(filename, outpdf, dice_map, **kw)
     
+    def needs_sync(self, filepath):
+        """ Check if the specified file needs to be synced.
+        
+        Input:  filepath    The location of the specified PDF file on the
+                            reader, relative to the mount point.
+        
+        Output: A Boolean indicating whether the annotated PDF needs to
+                be synced.
+        """
+        
+        try:
+            book = self.reader[filepath]
+        except KeyError:
+            # Not annotated
+            return False
+        if book.hash == self.library[filepath]['annhash']:
+            # No change in annotations
+            return False
+        return True
+    
+    @property
+    def needing_sync(self):
+        """ The files that need their annotations synced. """
+        return [f for f in self.library if self.needs_sync(f)]
+    
     def sync_pdf(self, filepath):
-        """ Create an up-to-date annotated PDf for the specified file.
+        """ Create an up-to-date annotated PDF for the specified file.
         
         This method short-circuits if the current anotated PDF is up-to-date.
         
@@ -325,16 +350,11 @@ class Manager(object):
                 sometime in the future.
         """
         
-        libentry = self.library[filepath]
-        try:
-            book = self.reader[filepath]
-        except KeyError:
-            # Not annotated
-            return False
-        if book.hash == libentry['annhash']:
-            # No change in annotations
+        if not self.needs_sync(filepath):
             return False
         
+        book = self.reader[filepath]
+        libentry = self.library[filepath]
         parts = libentry['filename'].rsplit('.', 1)
         try:
             suffix = parts[1]
