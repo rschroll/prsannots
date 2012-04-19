@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 USAGE = """
-prsam [init|config|add|remove|ls|sync|clean]
+prsam [init|config|add|import|remove|ls|sync|clean]
 
 The PRS Annotation Manager (prsam) manages a library of PDF files for
 you to annotate on your PRS-T1 reader.  When you add a file to the
@@ -26,6 +26,11 @@ specified, display the current configuration.
 prsam add [options] <file>
 
 Add the specified file to the library.
+~~
+prsam import [options] <reader file> <path on computer>
+
+Add the file on the reader to the library, syncing to the specified
+path on the computer.
 ~~
 prsam remove [options] <file>
 
@@ -170,6 +175,14 @@ def do_add(args, options):
                            "(You probably also want to set --infix, so both don't sync to the same place.)")
     m.save()
 
+def do_import(args, options):
+    m = get_manager(options.mount)
+    try:
+        m.import_pdf(args[0], args[1], options.infix, options.copy)
+    except IOError, e:
+        print_err_exit("Could not import file: " + str(e))
+    m.save()
+
 def do_remove(args, options):
     m = get_manager(options.mount)
     if not m.delete(args[0], options.delete):
@@ -276,18 +289,25 @@ def main(args):
         add_config_options()
         function = do_add
         nargs = 1
-    elif command == 'remove':
+    elif command == 'import':
         set_usage_description(USAGE[4])
+        parser.add_option('--infix', help='annotated PDFs are named filename.INFIX.pdf')
+        parser.add_option('-c', '--copy', action='store_true', default=False,
+                          help='copy the un-annotated PDF to the computer')
+        function = do_import
+        nargs = 2
+    elif command == 'remove':
+        set_usage_description(USAGE[5])
         parser.add_option('-d', '--delete', action='store_true', default=False,
                           help='delete file from reader')
         function = do_remove
         nargs = 1
     elif command == 'ls':
-        set_usage_description(USAGE[5])
+        set_usage_description(USAGE[6])
         function = do_ls
         nargs = 0
     elif command == 'sync':
-        set_usage_description(USAGE[6])
+        set_usage_description(USAGE[7])
         parser.add_option('-c', '--clean', action='store_true', default=False,
                           help='clean files from library')
         parser.add_option('-q', '--quiet', action='store_false', default=True, dest='notify',
@@ -299,7 +319,7 @@ def main(args):
         function = do_sync
         nargs = 0
     elif command == 'clean':
-        set_usage_description(USAGE[7])
+        set_usage_description(USAGE[8])
         function = do_clean
         nargs = 0
     else:

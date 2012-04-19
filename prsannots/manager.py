@@ -357,6 +357,53 @@ class Manager(object):
         outpdf, dice_map = dice(pdf, *diceargs)
         return self.add_pdf(filename, outpdf, dice_map, **kw)
     
+    def import_pdf(self, readerpath, comppath, infix=None, copy=False):
+        """ Add a file on the reader to the library, copying it to the
+        computer if necessary.
+        
+        Inputs: readerpath  The location of the PDF on the reader.  Either
+                            a true path or a path relative to the mount
+                            point.
+                
+                comppath    The path on the computer to sync to.  If a
+                            directory, the same basename as readerpath
+                            will be used.
+                
+                infix       The annotated PDF will be written back to the
+                            filesystem with the name filename.infix.pdf.
+                            If None, use the global settings.
+                
+                copy        Whether to copy an un-annotated version to
+                            readerpath.  Default False.
+        
+        Raises an IOError if something goes wrong.  Be sure to call save()
+        sometime after this method.
+        """
+        
+        if infix is None:
+            infix = self.settings['infix']
+        
+        absrp = os.path.abspath(readerpath)
+        if absrp.startswith(self.mount):
+            readerpath = absrp[len(self.mount) + 1:]
+        if self.in_library(readerpath)[0]:
+            raise IOError, 'Reader file %s already in library' % readerpath
+        if not os.path.exists(os.path.join(self.mount, readerpath)):
+            raise IOError, 'Reader file %s does not exist' % readerpath
+        
+        comppath = os.path.abspath(comppath)
+        if os.path.isdir(comppath):
+            comppath = os.path.join(comppath, os.path.basename(readerpath))
+        else:
+            compdir, compbn = os.path.split(comppath)
+            if not os.path.isdir(compdir):
+                raise IOError, '%s is not a valid location on your computer' % comppath
+        
+        self.library[readerpath] = { 'filename': comppath, 'infix': infix, 'annhash': 0, 'dice_map': None }
+        if copy:
+            shutil.copy(os.path.join(self.mount, readerpath), comppath)
+        self.sync_pdf(readerpath)
+    
     def needs_sync(self, filepath):
         """ Check if the specified file needs to be synced.
         
