@@ -217,12 +217,13 @@ class Highlight(object):
     
     @property
     def hash(self):
-        return hashlib.md5(str(self.page) + unicode(self.area) + unicode(self.text_content)).digest()
+        return hashlib.md5((str(self.page) + unicode(self.area)
+                            + unicode(self.text_content)).encode('utf-8')).digest()
     
     def write_to_pdf(self, page, outpdf, crop=None):
         if crop is None:
             # PDFMiner reports positions relative to the mediaBox.
-            crop = page.mediaBox[:]
+            crop = map(float, page.mediaBox[:])
         if self.bboxes is not None:
             shifted_bboxes = [(bb[0] + crop[0], bb[1] + crop[1], bb[2] + crop[0], bb[3] + crop[1])
                               for bb in self.bboxes]
