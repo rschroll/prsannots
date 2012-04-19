@@ -234,7 +234,7 @@ class Manager(object):
         self.update_settings(**kw)
     
     def add_pdf(self, filename, dice_pdf=None, dice_map=None, title=None,
-                author=None, infix=None, reader_dir=None, gs=None):
+                author=None, infix=None, reader_dir=None, gs=None, allow_dups=False):
         """ Add a PDF file to the reader, to be managed by this manager.
         
         Inputs: filename    The location on the computer of the PDF file.
@@ -265,9 +265,17 @@ class Manager(object):
                 gs          A Boolean flag on whether to run the diced
                             PDF through Ghostscript.  If None, use the
                             global settings.
+                
+                allow_dups  Whether to allow a file to be entered into
+                            the library multiple times.  Default False.
+        
+        Output: The filename to which the file was saved on the reader.
         
         Be sure to call save() sometime after this method.
         """
+        
+        if not allow_dups and self.in_library(filename)[0]:
+            return None
         
         filename = os.path.abspath(filename)
         if not os.path.exists(filename):
@@ -326,6 +334,7 @@ class Manager(object):
         
         relfn = readerfn[len(self.mount) + 1:]  # + 1 for separator
         self.library[relfn] = { 'filename': filename, 'infix': infix, 'annhash': 0, 'dice_map': dice_map }
+        return relfn
     
     def add_diced_pdf(self, filename, diceargs, **kw):
         """ Add a PDF file to the reader, diced as specified.
@@ -339,12 +348,14 @@ class Manager(object):
                 
                 Additional keyword arguments are the same as for add_pdf().
         
+        Output: The filename to which the file was saved on the reader.
+        
         Be sure to call save() sometime after this method.
         """
         
         pdf = pyPdf.PdfFileReader(open(filename, 'rb'))
         outpdf, dice_map = dice(pdf, *diceargs)
-        self.add_pdf(filename, outpdf, dice_map, **kw)
+        return self.add_pdf(filename, outpdf, dice_map, **kw)
     
     def needs_sync(self, filepath):
         """ Check if the specified file needs to be synced.
@@ -427,6 +438,9 @@ class Manager(object):
         
         Output: A Boolean indicating whether the file was removed from the manager.
         
+        Note that if a computer file is specified and exists multiple times
+        in the library, the entry removed will be random.
+        
         Be sure to call save() sometime after this method.
         """
         
@@ -448,6 +462,3 @@ class Manager(object):
         for filepath in self.library.keys():
             if not os.path.exists(os.path.join(self.mount, filepath)):
                 self.delete(filepath)
-
-## Todo
-# Test if file we're adding is already there

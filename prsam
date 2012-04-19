@@ -160,10 +160,14 @@ def do_add(args, options):
     else:
         func = lambda **kw: m.add_pdf(args[0], **kw)
     try:
-        func(title=options.title, author=options.author, infix=options.infix,
-             reader_dir=options.readerdir, gs=options.gs)
+        fn = func(title=options.title, author=options.author, infix=options.infix,
+                  reader_dir=options.readerdir, gs=options.gs, allow_dups=options.force)
     except IOError:
         print_err_exit("Could not open file %s" % args[0])
+    else:
+        if fn is None:
+            print_err_exit("File already on reader.  Use --force to add it again.\n"
+                           "(You probably also want to set --infix, so both don't sync to the same place.)")
     m.save()
 
 def do_remove(args, options):
@@ -267,6 +271,8 @@ def main(args):
                           'form "<h>x<v>" for different horizontal and vertical overlaps.')
         parser.add_option('-t', '--title', help='the title of the PDF')
         parser.add_option('-a', '--author', help='the author of the PDF')
+        parser.add_option('-f', '--force', action='store_true', default=False,
+                          help='add this file even if it already exists in the library')
         add_config_options()
         function = do_add
         nargs = 1
