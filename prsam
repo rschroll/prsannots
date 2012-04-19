@@ -168,19 +168,7 @@ def do_add(args, options):
 
 def do_remove(args, options):
     m = get_manager(options.mount)
-    filename = os.path.abspath(args[0])
-    reader_file = orig_file = error = None
-    if os.path.exists(filename):
-        if filename.startswith(m.mount):
-            reader_file = filename[len(m.mount) + 1:] # + 1 for separator
-        else:
-            orig_file = filename
-    else:
-        if args[0] in m.library:
-            reader_file = args[0]
-        else:
-            error = True
-    if error or not m.delete(reader_file, orig_file, options.delete):
+    if not m.delete(args[0], options.delete):
         print_err_exit("The file %s is not currently in the library." % args[0])
     m.save()
 
