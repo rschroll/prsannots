@@ -26,6 +26,8 @@ if not os.path.isdir(CONFIG_DIR):
     os.makedirs(CONFIG_DIR)
 CONFIG_EXT = '.prc'
 
+READER_FILE, COMPUTER_FILE = 1, 2
+
 def test_gs():
     """ Test if Ghostscript is installed with the pdfwrite device. """
     try:
@@ -175,6 +177,38 @@ class Manager(object):
         for k,v in kw.items():
             if k in self.settings:
                 self.settings[k] = v
+    
+    def in_library(self, filename):
+        """ Checks if the specified file is part of the library, either
+        on the reader or on the computer.
+        
+        Input:  filename    An absolute or relative path to a PDF, either
+                            on the reader or the computer, or the path
+                            of a PDF relative to the mount point of the
+                            reader.
+        
+        Output: If the file is part of the library, a tuple (path, flag),
+                where path is the path of the file relative to the mount
+                point of the reader (useful as a key for library) and
+                flag is READER_FILE or COMPUTER_FILE, indicating which
+                the initial filename referred to.  If not, the tuple
+                (None, 0).
+        """
+        
+        if filename in self.library:
+            return filename, READER_FILE
+            
+        filename = os.path.abspath(filename)
+        if filename.startswith(self.mount):
+            filename = filename[len(self.mount) + 1:]
+            if filename in self.library:
+                return filename, READER_FILE
+            return (None, 0)
+        
+        for fn, entry in self.library.items():
+            if entry['filename'] == filename:
+                return fn, COMPUTER_FILE
+        return (None, 0)
     
     def new(self, mount, **kw):
         """ Create a new configuration.  mount is where the reader is
@@ -379,15 +413,14 @@ class Manager(object):
                 count += 1
         return count
     
-    def delete(self, reader_file=None, orig_file=None, delete_from_reader=False):
+    def delete(self, filename, delete_from_reader=False):
         """ Remove a file from the manager, and optionally delete it from the reader.
         
-        Inputs: reader_file         The path to the file on the reader,
-                                    relative to the mount point.
-                
-                orig_file           The path to the file on the computer.
-                                    Note that only one of reader_file
-                                    and orig_file should be specified.
+        Inputs: filename            The filename of either the file on the
+                                    reader or the file on the computer.
+                                    The file on the reader may be specified
+                                    relative to the mount point of the
+                                    reader.
                 
                 delete_from_reader  Whether to delete the PDF file from
                                     the reader.
@@ -397,25 +430,18 @@ class Manager(object):
         Be sure to call save() sometime after this method.
         """
         
-        if orig_file is not None:
-            if reader_file is not None:
-                raise RuntimeError, "Specify only one of reader_file and orig_file."
-            orig_file = os.path.abspath(orig_file)
-            for k,v in self.library.items():
-                if v['filename'] == orig_file:
-                    reader_file = k
-                    break
+        filepath, _ = self.in_library(filename)
         
-        if reader_file in self.library:
-            if delete_from_reader:
-                try:
-                    os.unlink(os.path.join(self.mount, reader_file))
-                except OSError:
-                    pass
-            del(self.library[reader_file])
-            return True
+        if not filepath:
+            return False
         
-        return False
+        if delete_from_reader:
+            try:
+                os.unlink(os.path.join(self.mount, filepath))
+            except OSError:
+                pass
+        del(self.library[filepath])
+        return True
     
     def clean(self):
         """ Remove files from the manager that are no longer on the Reader. """
