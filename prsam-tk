@@ -31,41 +31,15 @@ import tkFileDialog
 
 from prsannots.manager import Manager, NotMountedError
 
-class EntryHint(Entry):
+class EntryValue(Entry):
     
     def __init__(self, master, hint='', **kw):
         self.var = StringVar()
-        self.hint = hint
         Entry.__init__(self, master, textvariable=self.var, **kw)
-        
-        self.bind('<FocusIn>', self.on_focus)
-        self.bind('<FocusOut>', self.on_blur)
-        self.on_blur(event=None)
     
     def set(self, value):
         self.var.set(value)
-        if self.focus_lastfor() == self:
-            self.on_focus(None)
-        else:
-            self.on_blur(None)
     
-    def get(self):
-        if self.var.get() == self.hint:
-            return ''
-        return self.var.get()
-    
-    def on_focus(self, event):
-        self.config(foreground='black')
-        if self.var.get() == self.hint:
-            self.var.set('')
-    
-    def on_blur(self, event):
-        if self.var.get():
-            self.config(foreground='black')
-        else:
-            self.config(foreground='gray', background='white')
-            self.var.set(self.hint)
-
 class SpinboxValue(Spinbox):
     
     def __init__(self, master, **kw):
@@ -84,50 +58,77 @@ class Main(Frame):
         n_sync = len(self.manager.needing_sync)
         self.master.protocol('WM_DELETE_WINDOW', self.close)
         
-        self.file_entry = EntryHint(self, width=40, hint='File Name')
-        self.file_entry.grid(row=0, column=0, columnspan=6)
+        self.file_entry = EntryValue(self, width=35, state='readonly')
+        self.file_entry.grid(row=0, column=0, sticky=E+W)
         self.file_button = Button(self, text='...', command=self.load_file)
-        self.file_button.grid(row=0, column=6, sticky=W)
+        self.file_button.grid(row=0, column=1, sticky=W)
         
-        Label(self, text="Dice PDF into").grid(row=1, column=0, columnspan=2, sticky=W)
-        self.ncols_entry = SpinboxValue(self, from_=1, to=10, width=2, justify=RIGHT)
+        self.add_frame = Frame(self)
+        self.add_frame.grid(row=1, column=0, columnspan=2, sticky=E+W)
+        
+        Label(self.add_frame, text="Add file to library", font='TkHeadingFont').grid(row=0, column=0, columnspan=7, pady=(0,2))
+        
+        Label(self.add_frame, text="Dice PDF into").grid(row=1, column=0, columnspan=2, sticky=W)
+        self.ncols_entry = SpinboxValue(self.add_frame, from_=1, to=10, width=2, justify=RIGHT)
         self.ncols_entry.grid(row=1, column=2, sticky=E)
-        Label(self, text="columns").grid(row=1, column=3, sticky=W)
-        self.nrows_entry = SpinboxValue(self, from_=1, to=10, width=2, justify=RIGHT)
+        Label(self.add_frame, text="columns").grid(row=1, column=3, sticky=W)
+        self.nrows_entry = SpinboxValue(self.add_frame, from_=1, to=10, width=2, justify=RIGHT)
         self.nrows_entry.grid(row=1, column=4, sticky=E)
-        Label(self, text="rows").grid(row=1, column=5, sticky=W)
+        Label(self.add_frame, text="rows").grid(row=1, column=5, sticky=W)
         
-        Label(self, text="Overlap fraction").grid(row=2, column=0, columnspan=2, sticky=W)
-        self.olh_entry = SpinboxValue(self, from_=0, to=0.2, increment=0.01, width=4, justify=RIGHT)
+        Label(self.add_frame, text="Overlap fraction").grid(row=2, column=0, columnspan=2, sticky=W)
+        self.olh_entry = SpinboxValue(self.add_frame, from_=0, to=0.2, increment=0.01, width=4, justify=RIGHT)
         self.olh_entry.grid(row=2, column=2, sticky=E)
-        Label(self, text="horizontal").grid(row=2, column=3, sticky=W)
-        self.olv_entry = SpinboxValue(self, from_=0, to=0.2, increment=0.01, width=4, justify=RIGHT)
+        Label(self.add_frame, text="horizontal").grid(row=2, column=3, sticky=W)
+        self.olv_entry = SpinboxValue(self.add_frame, from_=0, to=0.2, increment=0.01, width=4, justify=RIGHT)
         self.olv_entry.grid(row=2, column=4, sticky=E)
-        Label(self, text="vertical").grid(row=2, column=5, sticky=W)
+        Label(self.add_frame, text="vertical").grid(row=2, column=5, sticky=W)
         
-        Label(self, text="Title").grid(row=3, column=0, sticky=E)
-        self.title_entry = EntryHint(self, hint='Title')
+        Label(self.add_frame, text="Title").grid(row=3, column=0, sticky=E)
+        self.title_entry = EntryValue(self.add_frame)
         self.title_entry.grid(row=3, column=1, columnspan=5, sticky=E+W)
         
-        Label(self, text="Author").grid(row=4, column=0, sticky=E)
-        self.author_entry = EntryHint(self, hint='Author')
+        Label(self.add_frame, text="Author").grid(row=4, column=0, sticky=E)
+        self.author_entry = EntryValue(self.add_frame)
         self.author_entry.grid(row=4, column=1, columnspan=5, sticky=E+W)
-        self.add_button = Button(self, text='Add', command=self.add)
+        self.add_button = Button(self.add_frame, text='Add', command=self.add)
         self.add_button.grid(row=3, column=6, rowspan=2, sticky=S)
         
-        Frame(self, height=2, bd=1, relief=SUNKEN).grid(row=5, column=0, columnspan=7, sticky=E+W, pady=2)
+        self.import_frame = Frame(self)
+        self.import_frame.grid(row=1, column=0, columnspan=2, sticky=N+S+E+W)
+        self.import_frame.columnconfigure(0, weight=1)  # Expand first column to fill space
+        self.import_frame.columnconfigure(1, weight=0)  # Don't expand second column
+        
+        Label(self.import_frame, text="Import PDF already on reader", font='TkHeadingFont').grid(row=0, column=0, columnspan=2, pady=(0,2))
+        Label(self.import_frame, text="Select directory for syncing annotations").grid(row=1, column=0, sticky=W)
+        self.import_file_entry = EntryValue(self.import_frame, width=35, state='readonly')
+        self.import_file_entry.grid(row=2, column=0, sticky=E+W)
+        self.import_file_button = Button(self.import_frame, text='...', command=self.load_import_dir)
+        self.import_file_button.grid(row=2, column=1, sticky=W)
+        self.import_button = Button(self.import_frame, text="Import", command=self.do_import)
+        self.import_button.grid(row=3, column=1, sticky=E)
+
+        self.message_frame = Label(self, justify=LEFT)
+        self.message_frame.grid(row=1, column=0, columnspan=2, sticky=N+S+E+W)
+        
+        self.solo_message_frame = Label(self, justify=LEFT)
+        self.solo_message_frame.grid(row=1, column=0, columnspan=2, sticky=N+S+E+W)
+        self.solo_message_frame.grid_remove()
+        
+        Frame(self, height=2, bd=1, relief=SUNKEN).grid(row=2, column=0, columnspan=2, sticky=E+W, pady=2)
         
         self.sync_button = Button(self, text='Sync %i files' % n_sync, command=self.sync)
-        self.sync_button.grid(row=6, column=0, columnspan=5, sticky=W)
+        self.sync_button.grid(row=3, column=0, sticky=W)
         if not n_sync:
             self.sync_button.grid_remove()  # Bye Bye Bye
         self.close_button = Button(self, text='Close', command=self.close)
-        self.close_button.grid(row=6, column=5, columnspan=2, sticky=E)
+        self.close_button.grid(row=3, column=1, sticky=E)
         
         self.status = Label(self, text="", bd=1, relief=SUNKEN, anchor=W)
-        self.status.grid(row=7, column=0, columnspan=7, sticky=E+W, pady=(2,0))
+        self.status.grid(row=4, column=0, columnspan=2, sticky=E+W, pady=(2,0))
         
         self.reset()
+        self.message()
     
     def reset(self):
         self.file_entry.set('')
@@ -137,7 +138,21 @@ class Main(Frame):
         self.nrows_entry.set(1)
         self.olh_entry.set(0.05)
         self.olv_entry.set(0.05)
+        self.import_file_entry.set('')
+        self.import_button.config(state='disabled')
         self.master.focus()
+    
+    def message(self, text=''):
+        self.import_frame.grid_remove()
+        self.message_frame.grid()
+        self.message_frame.config(text="Select a file above to be added to your library.\n\n"+text)
+    
+    def solo_message(self, text=None):
+        if text is not None:
+            self.solo_message_frame.config(text=text)
+            self.solo_message_frame.grid()
+        else:
+            self.solo_message_frame.grid_remove()
     
     def load_file(self):
         filename = tkFileDialog.askopenfilename(parent=root, title="Choose PDF file to load",
@@ -148,16 +163,29 @@ class Main(Frame):
         if filename is None:
             filename = ''
         self.file_entry.set(filename)
+        
+        if not filename:
+            self.message()
+            return
         try:
             pdf = pyPdf.PdfFileReader(open(filename, 'rb'))
+        except (IOError, pyPdf.utils.PdfReadError):
+            self.message("Selected file is not a PDF file.")
+            return
+        
+        if self.manager.in_library(filename):
+            print self.manager.in_library(filename)
+            self.message("Selected file is already in library.")
+            return
+        
+        if filename.startswith(self.manager.mount):
+            self.message_frame.grid_remove()
+            self.import_frame.grid()
+        else:
+            self.message_frame.grid_remove()
+            self.import_frame.grid_remove()
             self.title_entry.set(pdf.documentInfo.get('/Title', ''))
             self.author_entry.set(pdf.documentInfo.get('/Author', ''))
-        except (IOError, pyPdf.utils.PdfReadError):
-            self.file_entry.config(background='#ff9933')
-            self.status.config(text="Warning: Having trouble reading PDF file")
-        else:
-            self.file_entry.config(background='white')
-            self.status.config(text="Ready to add file to library")
     
     def add(self):
         try:
@@ -168,11 +196,29 @@ class Main(Frame):
         except (ValueError, IOError, pyPdf.utils.PdfReadError), e:
             tkMessageBox.showerror(title="Add file",
                                    message="Could not add file to library.\n\n" + str(e))
-            self.status.config(text="Error adding file to library")
         else:
             self.reset()
             self.needs_save = True
-            self.status.config(text="File added to library")
+            self.message("File added to library.")
+    
+    def load_import_dir(self):
+        syncdir = tkFileDialog.askdirectory(title="Select mount point of reader", mustexist=True)
+        if syncdir.startswith(self.manager.mount):
+            syncdir = ''
+        self.import_file_entry.set(syncdir)
+        
+        self.import_button.config(state=(syncdir and 'normal' or 'disabled'))
+    
+    def do_import(self):
+        try:
+            self.manager.import_pdf(self.file_entry.get(), self.import_file_entry.get())
+        except IOError, e:
+            tkMessageBox.showerror(title="Import file",
+                                   message="Could not import file to library.\n\n" + str(e))
+        else:
+            self.reset()
+            self.needs_save = True
+            self.message("File added to library.")
     
     def close(self):
         if self.needs_save:
@@ -183,11 +229,11 @@ class Main(Frame):
         need_sync = self.manager.needing_sync
         for i, filename in enumerate(need_sync):
             self.sync_button.config(text="Syncing %i/%i..." % (i+1, len(need_sync)), relief=SUNKEN)
-            self.status.config(text="Syncing %s" % os.path.basename(filename))
+            self.solo_message("Syncing %s" % os.path.basename(filename))
             self.master.update_idletasks()  # Update the sync_button and status text
             self.manager.sync_pdf(filename)
-        self.status.config(text="Synced %i files" % len(need_sync))
         self.sync_button.grid_remove()
+        self.solo_message()
         self.needs_save = True
 
 if __name__ == '__main__':
