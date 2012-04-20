@@ -448,7 +448,17 @@ class Manager(object):
         except IndexError:
             suffix = 'pdf'
         annfn = '.'.join((parts[0], libentry['infix'], suffix))
-        book.write_annotated_pdf(open(annfn, 'wb'), pyPdf.PdfFileReader(open(libentry['filename'], 'rb')),
+        
+        pdffn = libentry['filename']
+        if not os.path.exists(pdffn):
+            # An imported file might not have the original on the computer.
+            # It will also not have a dice map.
+            if libentry['dice_map'] is None:
+                pdffn = os.path.join(self.mount, filepath)
+            else:
+                raise IOError, "Original PDF file %s does not exist." % pdffn
+        
+        book.write_annotated_pdf(open(annfn, 'wb'), pyPdf.PdfFileReader(open(pdffn, 'rb')),
                                  libentry['dice_map'])
         libentry['annhash'] = book.hash
         return True
