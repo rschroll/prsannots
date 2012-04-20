@@ -26,8 +26,6 @@ if not os.path.isdir(CONFIG_DIR):
     os.makedirs(CONFIG_DIR)
 CONFIG_EXT = '.prc'
 
-READER_FILE, COMPUTER_FILE = 1, 2
-
 def test_gs():
     """ Test if Ghostscript is installed with the pdfwrite device. """
     try:
@@ -187,28 +185,25 @@ class Manager(object):
                             of a PDF relative to the mount point of the
                             reader.
         
-        Output: If the file is part of the library, a tuple (path, flag),
-                where path is the path of the file relative to the mount
-                point of the reader (useful as a key for library) and
-                flag is READER_FILE or COMPUTER_FILE, indicating which
-                the initial filename referred to.  If not, the tuple
-                (None, 0).
+        Output: If the file is part of the library, returns the path of
+                the file relative to the mount point of the reader (useful
+                as a key for library).  If not, returns None.
         """
         
         if filename in self.library:
-            return filename, READER_FILE
+            return filename
             
         filename = os.path.abspath(filename)
         if filename.startswith(self.mount):
             filename = filename[len(self.mount) + 1:]
             if filename in self.library:
-                return filename, READER_FILE
-            return (None, 0)
+                return filename
+            return None
         
         for fn, entry in self.library.items():
             if entry['filename'] == filename:
-                return fn, COMPUTER_FILE
-        return (None, 0)
+                return fn
+        return None
     
     def new(self, mount, **kw):
         """ Create a new configuration.  mount is where the reader is
@@ -274,7 +269,7 @@ class Manager(object):
         Be sure to call save() sometime after this method.
         """
         
-        if not allow_dups and self.in_library(filename)[0]:
+        if not allow_dups and self.in_library(filename):
             return None
         
         filename = os.path.abspath(filename)
@@ -386,7 +381,7 @@ class Manager(object):
         absrp = os.path.abspath(readerpath)
         if absrp.startswith(self.mount):
             readerpath = absrp[len(self.mount) + 1:]
-        if self.in_library(readerpath)[0]:
+        if self.in_library(readerpath):
             raise IOError, 'Reader file %s already in library' % readerpath
         if not os.path.exists(os.path.join(self.mount, readerpath)):
             raise IOError, 'Reader file %s does not exist' % readerpath
@@ -491,7 +486,7 @@ class Manager(object):
         Be sure to call save() sometime after this method.
         """
         
-        filepath, _ = self.in_library(filename)
+        filepath = self.in_library(filename)
         
         if not filepath:
             return False
