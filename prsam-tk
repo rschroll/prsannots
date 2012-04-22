@@ -276,6 +276,7 @@ if __name__ == '__main__':
                     quit_ = True
         if quit_:
             root.destroy()
+            sys.exit(1)
         else:
             root.deiconify()  # Now show root
     
