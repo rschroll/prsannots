@@ -30,11 +30,6 @@ import sys
 import pyPdf
 from prsannots.prst1 import Reader
 
-__version__ = "0.1"
-__license__ = "LGPL 3"
-__author__ = "Robert Schroll"
-__date__ = "2012-02-04"
-
 
 def u_raw_input(prompt):
     """raw_input with unicode encoding/decoding."""

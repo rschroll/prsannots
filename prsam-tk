@@ -16,11 +16,6 @@
 # License along with this program.  If not, see
 # <http://www.gnu.org/licenses/>.
 
-__version__ = "0.1"
-__license__ = "LGPL 3"
-__author__ = "Robert Schroll"
-__date__ = "2012-04-16"
-
 import os
 import sys
 import pyPdf
