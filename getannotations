@@ -55,7 +55,7 @@ def main(path):
     userfn = u_raw_input("Enter output file name [%s]: " % outfn)
     if userfn:
         outfn = userfn
-    book.write_annotated_pdf(open(outfn, 'w'))
+    book.write_annotated_pdf(open(outfn, 'wb'))
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:

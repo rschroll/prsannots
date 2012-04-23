@@ -83,11 +83,11 @@ class Book(object):
     
     @property
     def pdf(self):
-        return pyPdf.PdfFileReader(open(os.path.join(self.reader.path, self.file), 'r'))
+        return pyPdf.PdfFileReader(open(os.path.join(self.reader.path, self.file), 'rb'))
     
     def pdf_layout(self, page):
         if self._layouts is None:
-            self._layouts = get_layouts(open(os.path.join(self.reader.path, self.file), 'r'))
+            self._layouts = get_layouts(open(os.path.join(self.reader.path, self.file), 'rb'))
         return self._layouts[page]
     
     def page_text(self, page):

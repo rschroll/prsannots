@@ -94,7 +94,7 @@ def write_pdf(outpdf, filename, gs=False):
             return
         print "Error code %i returned by Ghostscript.  Trying direct output." % retcode
     
-    outpdf.write(open(filename, 'w'))
+    outpdf.write(open(filename, 'wb'))
 
 # Helper functions
 def copy_page(page):
@@ -129,7 +129,7 @@ def dice_page(outpdf, page, ncols, nrows, overlap):
 if __name__ == '__main__':
     import sys
     try:
-        inpdf = PdfFileReader(open(sys.argv[1], 'r'))
+        inpdf = PdfFileReader(open(sys.argv[1], 'rb'))
         ncols = int(sys.argv[2])
         nrows = int(sys.argv[3])
     except (IndexError, IOError):
