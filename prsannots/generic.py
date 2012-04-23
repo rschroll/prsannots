@@ -31,16 +31,17 @@ class OneToOneMap(object):
         return (num, None)
 
 class Reader(object):
-    """ Represents an ereader, with its annotated books.  The books may
-    be indexed by their file name on the reader.
-    """
+    """Represents an ereader, with its annotated books.
     
+    The books may be indexed by their file name on the reader.
+    
+    """
     def __init__(self, path):
         self.path = path
     
     @property
     def books(self):
-        """ A list of books that are annotated PDF files on the reader. """
+        """A list of books that are annotated PDF files on the reader."""
         if not hasattr(self, '_books'):
             self._books = self._get_books()
         return self._books
@@ -56,8 +57,7 @@ class Reader(object):
 
 
 class Book(object):
-    """ Represents a PDF file stored on the ereader.
-    """
+    """Represents a PDF file stored on the ereader."""
     
     def __init__(self, reader, id_, title, filepath, thumbnail):
         self.reader = reader
@@ -70,7 +70,7 @@ class Book(object):
     
     @property
     def annotations(self):
-        """ A list of annotations to the book, sorted by page number. """
+        """A list of annotations to the book, sorted by page number."""
         if not hasattr(self, '_annotations'):
             self._annotations = self._get_annotations()
             self._annotations.sort(lambda a,b: cmp(a.page, b.page))
@@ -81,7 +81,7 @@ class Book(object):
     
     @property
     def hash(self):
-        """ A number unique to the current annotation state. """
+        """A number unique to the current annotation state."""
         if not hasattr(self, '_hash'):
             hashes = [ann.hash for ann in self.annotations]
             self._hash = hashlib.md5(''.join(hashes)).digest()
@@ -89,23 +89,23 @@ class Book(object):
     
     @property
     def pdf(self):
-        """ A pyPdf.PdfFileReader instance of the PDF file. """
+        """A pyPdf.PdfFileReader instance of the PDF file."""
         return pyPdf.PdfFileReader(open(os.path.join(self.reader.path, self.file), 'rb'))
     
     def pdf_layout(self, page):
-        """ Get a pdfminer.LTPage object for page. """
+        """Get a pdfminer.LTPage object for page."""
         if self._layouts is None:
             self._layouts = get_layouts(open(os.path.join(self.reader.path, self.file), 'rb'))
         return self._layouts[page]
     
     def page_text(self, page):
-        """ Get the pagetext.PageText object for page. """
+        """Get the pagetext.PageText object for page."""
         if page not in self._page_texts:
             self._page_texts[page] = PageText(self.pdf_layout(page))
         return self._page_texts[page]
     
     def write_annotated_pdf(self, outfd, pdf=None, dice_map=None):
-        """ Write an annotated version of the PDF file.
+        """Write an annotated version of the PDF file.
         
         Inputs: outfd       A file object, to which the PDF is output.
                 
@@ -113,8 +113,8 @@ class Book(object):
                 
                 dice_map    The dice map describing how the PDF on the
                             reader was made from the original PDF file.
-        """
         
+        """
         if pdf is None:
             pdf = self.pdf
         if dice_map is None:
@@ -133,8 +133,7 @@ class Book(object):
 
 
 class Freehand(object):
-    """ Represents a freehand annotation to a Book.
-    """
+    """Represents a freehand annotation to a Book."""
     
     def __init__(self, book, page, svg_file, crop_left, crop_top, crop_right, crop_bottom, orientation):
         self.book = book
@@ -145,7 +144,7 @@ class Freehand(object):
     
     @property
     def svg(self):
-        """ The SVG associated with the annotation, as a minidom object. """
+        """The SVG associated with the annotation, as a minidom object."""
         if not hasattr(self, '_svg'):
             doc = minidom.parse(os.path.join(self.book.reader.path, self.svg_file))
             drawing = doc.getElementsByTagNameNS('http://www.sony.com/notepad', 'drawing')[0]
@@ -156,12 +155,12 @@ class Freehand(object):
     
     @property
     def hash(self):
-        """ Uniquely identifies the current annotation. """
+        """Uniquely identifies the current annotation."""
         return hashlib.md5(str(self.crop) + str(self.orientation) + self.svg.toxml('utf-8')).digest()
     
     @property
     def pdf(self):
-        """ The freehand annotation in PDF format, as a pyPdf.pdf.PageObject. """
+        """The freehand annotation in PDF format, as a pyPdf.pdf.PageObject."""
         renderer = svglib.SvgRenderer()
         renderer.render(self.svg)
         drawing = renderer.finish()
@@ -171,12 +170,12 @@ class Freehand(object):
         return pdfdoc.getPage(0)
     
     def write_to_pdf(self, page, outpdf, crop=None):
-        """ Write the annotation to the page which will be in outpdf.
+        """Write the annotation to the page which will be in outpdf.
         
         Note that outpdf is not used in this function; it is included only
         to have the same signature as Highlight.write_to_pdf().
-        """
         
+        """
         if crop is None:
             # The reader displays the intersection of the cropBox and the mediaBox.
             crop = intersection(page.cropBox[:], page.mediaBox[:])
@@ -200,11 +199,10 @@ class Freehand(object):
 
 
 class Highlight(object):
-    """ Represents a highlighted annotation to a Book.
-    """
+    """Represents a highlighted annotation to a Book."""
     
     def __init__(self, book, page, area, content_type, content=None, strict=False):
-        """ Initialize the Highlight object.
+        """Initialize the Highlight object.
         
         Inputs: book            The Book in which this annotation is.
                 
@@ -224,8 +222,8 @@ class Highlight(object):
                                 on the page.  Instead, we add a text
                                 annotation in the top-left corner of the
                                 page, saying what happend.
+        
         """
-
         self.book = book
         self.page = int(page)
         self.message = ''
@@ -236,7 +234,7 @@ class Highlight(object):
     
     @property
     def bboxes(self):
-        """ A list of bounding boxes that cover the annotated region. """
+        """A list of bounding boxes that cover the annotated region."""
         if not hasattr(self, '_bboxes'):
             if isinstance(self.area, basestring):
                 try:
@@ -255,7 +253,7 @@ class Highlight(object):
     
     @property
     def text_content(self):
-        """ The text to put into the annotation. """
+        """The text to put into the annotation."""
         if self.content_type is HIGHLIGHT:
             if self.message:
                 return self.message[2:]  # Remove initial newlines
@@ -269,12 +267,12 @@ class Highlight(object):
     
     @property
     def hash(self):
-        """ Uniquely identify the annotation. """
+        """Uniquely identify the annotation."""
         return hashlib.md5((str(self.page) + unicode(self.area)
                             + unicode(self.text_content)).encode('utf-8')).digest()
     
     def write_to_pdf(self, page, outpdf, crop=None):
-        """ Write the annotation to page in outpdf. """
+        """Write the annotation to page in outpdf."""
         if crop is None:
             # PDFMiner reports positions relative to the mediaBox.
             crop = map(float, page.mediaBox[:])

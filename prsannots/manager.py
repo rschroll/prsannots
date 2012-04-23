@@ -27,7 +27,7 @@ if not os.path.isdir(CONFIG_DIR):
 CONFIG_EXT = '.prc'
 
 def test_gs():
-    """ Test if Ghostscript is installed with the pdfwrite device. """
+    """Test if Ghostscript is installed with the pdfwrite device."""
     try:
         output = subprocess.check_output(['gs', '-h'])
     except (OSError, subprocess.CallProcessError):
@@ -40,10 +40,10 @@ class NotMountedError(Exception):
     pass
 
 class Manager(object):
-    """ Tracks a set of files on the eReader, so that annotated files can
+    """Tracks a set of files on the eReader, so that annotated files can
     be retrieved.
-    """
     
+    """
     _base_settings = { 'infix': 'annot', 'reader_dir': 'download', 'gs': None}
     _id_file = '.prsannots'
     
@@ -60,34 +60,34 @@ class Manager(object):
     
     @property
     def mount(self):
-        """ The mount point is usually stored in self.settings, but we
+        """The mount point is usually stored in self.settings, but we
         want to be able to mount somewhere else if needed.
-        """
         
+        """
         if self._mount is not None:
             return self._mount
         return self.settings.get('mount', None)
     
     @mount.setter
     def mount(self, value):
-        """ Set to None to use self.settings['mount']. """
+        """Set to None to use self.settings['mount']."""
         self._mount = value
     
     def update_mount_setting(self):
-        """ Update the mount point in the settings to the current mount
+        """Update the mount point in the settings to the current mount
         point.  Be sure to call save() sometime after this method.
-        """
         
+        """
         if self.mount is not None:  # Before loading
             self.settings['mount'] = self.mount
             self.mount = None
     
     def load(self, filename):
-        """ Load the configuration file specified by filename.  Note that
+        """Load the configuration file specified by filename.  Note that
         this method does not require the reader to be mounted.  The only
         indication that it isn't will be that self.reader = None.
-        """
         
+        """
         fd = open(filename, 'rb')
         self.settings = pickle.load(fd)
         self.library = pickle.load(fd)
@@ -99,11 +99,11 @@ class Manager(object):
             pass
     
     def load_if_mounted(self, filename):
-        """ Load the configuration file specified by filename if the
+        """Load the configuration file specified by filename if the
         corresponding reader is mounted.  Return True if successful,
         False otherwise.
-        """
         
+        """
         fd = open(filename, 'rb')
         self.settings = pickle.load(fd)
         id_file = os.path.join(self.mount, self._id_file)
@@ -119,25 +119,25 @@ class Manager(object):
         return False
     
     def load_mounted_reader(self):
-        """ Load the reader that is mounted, if a configuration file is
+        """Load the reader that is mounted, if a configuration file is
         found for it.  Returns True if a reader was found, False otherwise.
         
         Note that if multiple readers are mounted, only the "first" one
         will be loaded.  Which one this is is deterministic, but will
         seem random to the user.
-        """
         
+        """
         for f in glob.glob(os.path.join(CONFIG_DIR, '*' + CONFIG_EXT)):
             if self.load_if_mounted(f):
                 return True
         return False
     
     def load_mount(self, mount):
-        """ Load the reader at mount, if there is a configuration file for
+        """Load the reader at mount, if there is a configuration file for
         it, even if that file suggests a different mount point.  Returns
         True if successful, False otherwise.
-        """
         
+        """
         mount = os.path.abspath(mount)
         self.mount = mount
         try:
@@ -159,7 +159,7 @@ class Manager(object):
         return False
     
     def save(self):
-        """ Save the configuration. """
+        """Save the configuration."""
         
         fd = open(os.path.join(CONFIG_DIR, self.settings['id'] + CONFIG_EXT), 'wb')
         pickle.dump(self.settings, fd, -1)
@@ -167,17 +167,17 @@ class Manager(object):
         fd.close()
     
     def update_settings(self, **kw):
-        """ Update the global settings for the manager.
+        """Update the global settings for the manager.
         
         Be sure to call save() sometime after this method.
-        """
         
+        """
         for k,v in kw.items():
             if k in self.settings:
                 self.settings[k] = v
     
     def in_library(self, filename):
-        """ Checks if the specified file is part of the library, either
+        """Checks if the specified file is part of the library, either
         on the reader or on the computer.
         
         Input:  filename    An absolute or relative path to a PDF, either
@@ -188,8 +188,8 @@ class Manager(object):
         Output: If the file is part of the library, returns the path of
                 the file relative to the mount point of the reader (useful
                 as a key for library).  If not, returns None.
-        """
         
+        """
         if filename in self.library:
             return filename
             
@@ -206,12 +206,12 @@ class Manager(object):
         return None
     
     def new(self, mount, **kw):
-        """ Create a new configuration.  mount is where the reader is
+        """Create a new configuration.  mount is where the reader is
         mounted.  Other keyword arguments specify global settings.
         
         Be sure to call save() sometime after this method.
-        """
         
+        """
         mount = os.path.abspath(mount)
         if not os.path.ismount(mount):
             raise NotMountedError, "Reader does not appear to be mounted at %s." % mount
@@ -230,7 +230,7 @@ class Manager(object):
     
     def add_pdf(self, filename, dice_pdf=None, dice_map=None, title=None,
                 author=None, infix=None, reader_dir=None, gs=None, allow_dups=False):
-        """ Add a PDF file to the reader, to be managed by this manager.
+        """Add a PDF file to the reader, to be managed by this manager.
         
         Inputs: filename    The location on the computer of the PDF file.
                 
@@ -267,8 +267,8 @@ class Manager(object):
         Output: The filename to which the file was saved on the reader.
         
         Be sure to call save() sometime after this method.
-        """
         
+        """
         if not allow_dups and self.in_library(filename):
             return None
         
@@ -332,7 +332,7 @@ class Manager(object):
         return relfn
     
     def add_diced_pdf(self, filename, diceargs, **kw):
-        """ Add a PDF file to the reader, diced as specified.
+        """Add a PDF file to the reader, diced as specified.
         
         Inputs: filename    The location on the computer of the PDF file.
                 
@@ -346,14 +346,14 @@ class Manager(object):
         Output: The filename to which the file was saved on the reader.
         
         Be sure to call save() sometime after this method.
-        """
         
+        """
         pdf = pyPdf.PdfFileReader(open(filename, 'rb'))
         outpdf, dice_map = dice(pdf, *diceargs)
         return self.add_pdf(filename, outpdf, dice_map, **kw)
     
     def import_pdf(self, readerpath, comppath, infix=None, copy=False):
-        """ Add a file on the reader to the library, copying it to the
+        """Add a file on the reader to the library, copying it to the
         computer if necessary.
         
         Inputs: readerpath  The location of the PDF on the reader.  Either
@@ -373,8 +373,8 @@ class Manager(object):
         
         Raises an IOError if something goes wrong.  Be sure to call save()
         sometime after this method.
-        """
         
+        """
         if infix is None:
             infix = self.settings['infix']
         
@@ -400,15 +400,15 @@ class Manager(object):
         self.sync_pdf(readerpath)
     
     def needs_sync(self, filepath):
-        """ Check if the specified file needs to be synced.
+        """Check if the specified file needs to be synced.
         
         Input:  filepath    The location of the specified PDF file on the
                             reader, relative to the mount point.
         
         Output: A Boolean indicating whether the annotated PDF needs to
                 be synced.
-        """
         
+        """
         try:
             book = self.reader[filepath]
         except KeyError:
@@ -421,11 +421,11 @@ class Manager(object):
     
     @property
     def needing_sync(self):
-        """ The files that need their annotations synced. """
+        """The files that need their annotations synced."""
         return [f for f in self.library if self.needs_sync(f)]
     
     def sync_pdf(self, filepath):
-        """ Create an up-to-date annotated PDF for the specified file.
+        """Create an up-to-date annotated PDF for the specified file.
         
         This method short-circuits if the current anotated PDF is up-to-date.
         
@@ -435,8 +435,8 @@ class Manager(object):
         Output: A Boolean indicating whether the annotated PDF was
                 updated or not.  If True, be sure to call save()
                 sometime in the future.
-        """
         
+        """
         if not self.needs_sync(filepath):
             return False
         
@@ -464,12 +464,12 @@ class Manager(object):
         return True
     
     def sync(self):
-        """ Sync all PDF files tracked my this manager.
+        """Sync all PDF files tracked my this manager.
         
         Returns the number of updated annotated PDF files.  Be sure to
         call save() in the future if this number is > 0.
-        """
         
+        """
         count = 0
         for f in self.library:
             if self.sync_pdf(f):
@@ -477,7 +477,7 @@ class Manager(object):
         return count
     
     def delete(self, filename, delete_from_reader=False):
-        """ Remove a file from the manager, and optionally delete it from the reader.
+        """Remove a file from the manager, and optionally delete it from the reader.
         
         Inputs: filename            The filename of either the file on the
                                     reader or the file on the computer.
@@ -494,8 +494,8 @@ class Manager(object):
         in the library, the entry removed will be random.
         
         Be sure to call save() sometime after this method.
-        """
         
+        """
         filepath = self.in_library(filename)
         
         if not filepath:
@@ -510,7 +510,7 @@ class Manager(object):
         return True
     
     def clean(self):
-        """ Remove files from the manager that are no longer on the Reader. """
+        """Remove files from the manager that are no longer on the Reader."""
         for filepath in self.library.keys():
             if not os.path.exists(os.path.join(self.mount, filepath)):
                 self.delete(filepath)

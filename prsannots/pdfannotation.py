@@ -11,8 +11,7 @@ def float_array(lst):
 
 def _markup_annotation(rect, contents=None, author=None, subject=None,
                        color=None, alpha=1, flag=4):
-    """ Set shared properties of all markup annotations.
-    """
+    """Set shared properties of all markup annotations."""
     
     # Python timezone handling is a messs, so just use UTC
     now = datetime.utcnow().strftime("D:%Y%m%d%H%M%SZ00'00")
@@ -37,7 +36,7 @@ def _markup_annotation(rect, contents=None, author=None, subject=None,
 
 def highlight_annotation(quadpoints, contents=None, author=None,
                          subject=None, color=[1,1,0], alpha=1, flag=4):
-    """ Create a 'Highlight' annotation that covers the area given by quadpoints.
+    """Create a 'Highlight' annotation that covers the area given by quadpoints.
     
     Inputs: quadpoints  A list of rectangles to be highlighted as part of this
                         annotation.  Each is specified by a quadruple [x0,y0,x1,y1],
@@ -57,8 +56,8 @@ def highlight_annotation(quadpoints, contents=None, author=None,
                         printed.  See the PDF spec for more.
     
     Output: A DictionaryObject representing the annotation.
-    """
     
+    """
     qpl = []
     for x0,y0,x1,y1 in quadpoints:
         qpl.extend([x0, y1, x1, y1, x0, y0, x1, y0])
@@ -73,7 +72,7 @@ def highlight_annotation(quadpoints, contents=None, author=None,
 
 def text_annotation(rect, contents=None, author=None, subject=None, color=[0.94,0.86,0.33],
                     alpha=1, flag=4, icon=None, open_=False, state=None, state_model=None):
-    """ Create a 'Text' annotation, a sticky note at the location rect.
+    """Create a 'Text' annotation, a sticky note at the location rect.
     
     Inputs: rect        A rectangle [x0,y0,x1,y1].  The icon will be in the top-
                         left corner of this rectangle (x0,y1) regardless of the
@@ -100,8 +99,8 @@ def text_annotation(rect, contents=None, author=None, subject=None, color=[0.94,
             state_model for further details.
     
     Output: A DictionaryObject representing the annotation.
-    """
     
+    """
     retval = _markup_annotation(rect, contents, author, subject, color, alpha, flag)
     retval[NameObject('/Subtype')] = NameObject('/Text')
     retval[NameObject('/Open')] = BooleanObject(open_)
@@ -114,10 +113,10 @@ def text_annotation(rect, contents=None, author=None, subject=None, color=[0.94,
     return retval
 
 def add_annotation(outpdf, page, annot):
-    """ Add the annotation 'annot' to the page 'page' that is/will be part of
+    """Add the annotation 'annot' to the page 'page' that is/will be part of
     the PdfFileWriter 'outpdf'.
-    """
     
+    """
     # We need to make an indirect reference, or Acrobat will get huffy.
     indir = outpdf._addObject(annot)
     if '/Annots' in page:

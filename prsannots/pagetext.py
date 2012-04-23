@@ -24,9 +24,7 @@ class MultipleSubstringError(Exception):
 
 
 def get_layouts(fd):
-    """ From an open PDF file, get the page layouts (of type
-    pdfminer.layout.LTPage).
-    """
+    """From an open PDF file, get the page layouts (of type pdfminer.layout.LTPage)."""
     
     parser = PDFParser(fd)
     doc = PDFDocument()
@@ -47,14 +45,13 @@ def get_layouts(fd):
 
 
 class PageText(object):
-    """ Tracks the characters that make up a page's text, as well as the
+    """Tracks the characters that make up a page's text, as well as the
     location of each of them.  The characters may be read out by calling
     string or unicode on this object.
-    """
     
+    """
     def __init__(self, page=None):
-        """ Input:  page    A pdfminer.layout.LTPage to load the text from.
-        """
+        """Input:  page    A pdfminer.layout.LTPage to load the text from."""
         
         self._chars = []
         self._pos = []
@@ -79,22 +76,21 @@ class PageText(object):
         return LIGATURES.get(t, t)
     
     def add(self, char, lnum):
-        """ Add a character to the page.
+        """Add a character to the page.
         
         Input:  char    The pdfminer.layout.LTChar (or LTAnon) character.
                 
                 lnum    The line on which the character is.  The only
                         important thing about it is that it changes
                         between lines and is constant within a line.
-        """
         
+        """
         for c in self._get_chars(char):
             self._chars.append(c)
             self._pos.append((lnum, getattr(char, 'bbox', None)))
     
     def load(self, page):
-        """ Add the text from the page (a pdfminer.layout.LTPage).
-        """
+        """Add the text from the page (a pdfminer.layout.LTPage)."""
         
         for box in page._objs:
             if isinstance(box, LTTextBox):
@@ -103,7 +99,7 @@ class PageText(object):
                         self.add(char, l)
     
     def bboxes(self, start, length):
-        """ Get some bounding boxes that contain the specified characters.
+        """Get some bounding boxes that contain the specified characters.
         
         Input:  start   The first character to contain.
                 
@@ -112,8 +108,8 @@ class PageText(object):
         Returns a list bounding boxes, each one a list of length 4:
         [left, bottom, right, top].  These are measured relative to the
         lower left of the mediaBox, NOT in absolute coordinates.
-        """
         
+        """
         bbox = []
         currline = None
         for l, box in self._pos[start:start+length]:
@@ -131,7 +127,7 @@ class PageText(object):
         return bbox
     
     def box_substring(self, substr, strict=False):
-        """ Get some bounding boxes that contain the specified string.
+        """Get some bounding boxes that contain the specified string.
         
         If the specified string does not appear on the page, a
         NoSubstringError is raised.  The behavior when the substring
@@ -147,8 +143,8 @@ class PageText(object):
         Returns a list bounding boxes, each one a list of length 4:
         [left, bottom, right, top].  These are measured relative to the
         lower left of the mediaBox, NOT in absolute coordinates.
+        
         """
-
         s = unicode(self)
         lf = s.find(substr)
         if lf == -1:

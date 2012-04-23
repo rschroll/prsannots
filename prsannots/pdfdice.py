@@ -15,7 +15,7 @@ PAGE_BOXES = ("/MediaBox", "/CropBox", "/BleedBox", "/TrimBox", "/ArtBox")
 
 
 def dice(inpdf, ncols, nrows, overlap=0.05):
-    """ Dice each page in the PDF file into a number of sub-pages.
+    """Dice each page in the PDF file into a number of sub-pages.
     
     Inputs: inpdf       The pyPdf.PdfFileReader to be diced.
             
@@ -34,8 +34,8 @@ def dice(inpdf, ncols, nrows, overlap=0.05):
                         page is the page in inpdf and bbox a tuple of
                         length 4 giving the bounding box that specifies
                         the diced page on the original page.
-    """
     
+    """
     if isinstance(overlap, (float, int)):
         overlap = (overlap, overlap)
     outpdf = PdfFileWriter()
@@ -47,7 +47,7 @@ def dice(inpdf, ncols, nrows, overlap=0.05):
     return outpdf, dice_map
 
 def write_pdf(outpdf, filename, gs=False):
-    """ Write the PDF file, possibly sending running it through Ghostscript.
+    """Write the PDF file, possibly sending running it through Ghostscript.
     
     Inputs: outpdf      The pyPdf.PdfFileWriter to be output.
             
@@ -56,8 +56,8 @@ def write_pdf(outpdf, filename, gs=False):
             gs          If True, the file will be sent through Ghostscript's
                         pdfwrite device.  Sometimes this can reduce the
                         file size and improve the Reader's rendering time.
-    """
     
+    """
     if gs:
         info = outpdf._info.getObject()
         title = info.get('/Title', None)
