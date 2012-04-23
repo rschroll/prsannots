@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
+check_dependencies = False
 try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
+    check_dependencies = True
 
 setup(
     name = 'prsannots',
@@ -30,18 +32,23 @@ setup(
     long_description = open('README.rst', 'r').read()
     )
 
-# Test to see if dependencies got installed or not
-try:
-    import pyPdf
-except ImportError:
-    print "Note: pyPdf is needed, but not installed. See http://pybrary.net/pyPdf/"
+if check_dependencies:
+    # Test to see if dependencies are installed or not.  We don't want to
+    # check these if installing with pip, since the dependencies will be
+    # installed afterwards.  But there doesn't seem to be a way to test
+    # for pip, so we only test these when using distutils, and hope that
+    # everything goes correctly with setuptools or distribute.
+    try:
+        import pyPdf
+    except ImportError:
+        print "Note: pyPdf is needed, but not installed. See http://pybrary.net/pyPdf/"
 
-try:
-    import reportlab
-except ImportError:
-    print "Note: ReportLab is needed, but not installed.  See http://www.reportlab.com/software/opensource/rl-toolkit/"
+    try:
+        import reportlab
+    except ImportError:
+        print "Note: ReportLab is needed, but not installed.  See http://www.reportlab.com/software/opensource/rl-toolkit/"
 
-try:
-    import pdfminer
-except ImportError:
-    print "Note: PDFMiner is needed, but not installed.  See http://www.unixuser.org/~euske/python/pdfminer/"
+    try:
+        import pdfminer
+    except ImportError:
+        print "Note: PDFMiner is needed, but not installed.  See http://www.unixuser.org/~euske/python/pdfminer/"
