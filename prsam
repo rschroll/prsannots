@@ -29,6 +29,7 @@ prsam add [options] <file>
 Add the specified file to the library.
 ~~
 prsam import [options] <reader file> <path on computer>
+   or: prsam import [options] --all <directory on computer>
 
 Add the file on the reader to the library, syncing to the specified
 path on the computer.
@@ -175,10 +176,16 @@ def do_add(args, options):
 
 def do_import(args, options):
     m = get_manager(options.mount)
-    try:
-        m.import_pdf(args[0], args[1], options.infix, options.copy)
-    except IOError, e:
-        print_err_exit("Could not import file: " + str(e))
+    if options.all:
+        try:
+            m.import_all(args[0], options.infix, options.copy)
+        except IOError, e:
+            print_err_exit("Could not import files: " + str(e))
+    else:
+        try:
+            m.import_pdf(args[0], args[1], options.infix, options.copy)
+        except IOError, e:
+            print_err_exit("Could not import file: " + str(e))
     m.save()
 
 def do_remove(args, options):
@@ -292,8 +299,10 @@ def main(args):
         parser.add_option('--infix', help='annotated PDFs are named filename.INFIX.pdf')
         parser.add_option('-c', '--copy', action='store_true', default=False,
                           help='copy the un-annotated PDF to the computer')
+        parser.add_option('-a', '--all', action='store_true', default=False,
+                          help='import all annotated PDFs on the reader.  Do not specify <reader path>.')
         function = do_import
-        nargs = 2
+        # nargs depends on --all, so set below
     elif command == 'remove':
         set_usage_description(USAGE[5])
         parser.add_option('-d', '--delete', action='store_true', default=False,
@@ -326,6 +335,12 @@ def main(args):
         nargs = -1 # Always go to print_usage below.
     
     options, args = parser.parse_args(args)
+    
+    if command == 'import':
+        if options.all:
+            nargs = 1
+        else:
+            nargs = 2
     
     if len(args) != nargs:
         parser.print_usage()

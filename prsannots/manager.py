@@ -369,7 +369,7 @@ class Manager(object):
                             If None, use the global settings.
                 
                 copy        Whether to copy an un-annotated version to
-                            readerpath.  Default False.
+                            comppath.  Default False.
         
         Raises an IOError if something goes wrong.  Be sure to call save()
         sometime after this method.
@@ -398,6 +398,40 @@ class Manager(object):
         if copy:
             shutil.copy(os.path.join(self.mount, readerpath), comppath)
         self.sync_pdf(readerpath)
+    
+    def import_all(self, comppath, infix=None, copy=False):
+        """Add all the annotated PDFs on the reader to the library,
+        copying them to the computer as necessary.
+        
+        Inputs: comppath    The directory on the computer where all of
+                            the PDFs will be synced to.
+                
+                infix       The annotated PDFs will be written back to the
+                            filesystem with the name filename.infix.pdf.
+                            If None, use the global settings.
+                
+                copy        Whether to copy an un-annotated version to
+                            readerpath.  Default False.
+        
+        Output: The number of files added to the library
+        
+        Raises an IOError if something goes wrong.  Be sure to call save()
+        sometime after this method.
+        
+        """
+        comppath = os.path.abspath(comppath)
+        if not os.path.isdir(comppath):
+            raise IOError, 'First argument must be a directory'
+        
+        count = 0
+        for book in self.reader.books:
+            try:
+                self.import_pdf(book.file, comppath, infix, copy)  # raises IOError if already in library
+            except IOError:
+                pass
+            else:
+                count += 1
+        return count
     
     def needs_sync(self, filepath):
         """Check if the specified file needs to be synced.
