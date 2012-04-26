@@ -95,10 +95,10 @@ annotated PDF file.
 
 Python Package
 --------------
-The heavy-lifting of dealing with the annotated PDF files has been 
-pulled out of the programs above and put into the prsannots 
-package.  My hope is that this will allow the creation of better 
-GUIs, for normal people who aren't comfortable living on the command 
+The heavy-lifting of dealing with the annotated PDF files has been
+pulled out of the programs above and put into the prsannots
+package.  My hope is that this will allow the creation of better
+GUIs, for normal people who aren't comfortable living on the command
 line.
 
 Here are the modules provided:
@@ -210,7 +210,7 @@ Device support:
   differently.  Adding support for these readers is hopefully as
   simple as producing an altered version of ``prst1.py``.
 
-  I don't know how similar other brands behave, but I'm happy to
+  I don't know how similarly other brands behave, but I'm happy to
   provide what assistance I can in trying to make them work.
 
 Sync speed:
@@ -218,6 +218,17 @@ Sync speed:
   few annotations).  This should be sped up, but I haven't figured
   out where the bottleneck is yet.  In the meantime, please be
   patient.
+
+PDF viewers:
+  The freehand annotations get written directly on the PDF file, and
+  should be viewable in any PDF viewer.  Highlight annotations use
+  the PDF annotation mechanism, which is supported by only some PDF
+  viewers.  We ensure that all notations are visible in Acrobat
+  Reader. Other viewers (notably Evince and Xpdf) do not display the
+  highlight annotations.  The working assumption is that this is a
+  failure of the viewer, but I'll happily accept patches to make
+  these annotations more widely supported, provided they do not
+  complicate the code too much.
 
 About
 '''''
