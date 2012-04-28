@@ -17,7 +17,7 @@ setup(
     url = 'https://github.com/rschroll/prsannots',
     packages = ['prsannots'],
     scripts = ['prsam', 'prsam-tk', 'getannotations'],
-    install_requires = ['pyPdf >= 1.13', 'reportlab', 'pdfminer'],
+    install_requires = ['pyPdf >= 1.13', 'pdfminer'],
     keywords = 'pdf, pdf annotation, ereader, PRS-T1',
     classifiers = [
         'Development Status :: 3 - Alpha',
@@ -42,11 +42,6 @@ if check_dependencies:
         import pyPdf
     except ImportError:
         print "Note: pyPdf is needed, but not installed. See http://pybrary.net/pyPdf/"
-
-    try:
-        import reportlab
-    except ImportError:
-        print "Note: ReportLab is needed, but not installed.  See http://www.reportlab.com/software/opensource/rl-toolkit/"
 
     try:
         import pdfminer

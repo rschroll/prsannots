@@ -120,10 +120,9 @@ pagetext      Get the location of each character on a PDF page, and get
 ------------- ----------------------------------------------------------
 pdfdice       Cut the pages of a PDF file into subpages.
 ------------- ----------------------------------------------------------
-svglib        A slightly modified version of svglib_.
+pdfcontent    Adds content to PDF pages.  Includes a very simple SVG-to-
+              PDF converter.
 ============= ==========================================================
-
-.. _svglib: http://pypi.python.org/pypi/svglib/
 
 Requirements
 ------------
@@ -133,15 +132,13 @@ confirm this?)  It will not work on 2.4 and earlier, and it is not
 compatible with Python 3.
 
 In addition to the standard library, it requires the pyPdf_ (>=
-1.13), ReportLab_, and PDFMiner_ libraries.  For Debian-based
-systems, the first two are provided by the ``python-pypdf`` and
-``python-reportlab`` packages.  (Note that Debian prior to Wheezy
-and Ubuntu prior to 11.10 have a too-old version of pyPdf.)  All
-three are available in PyPI_. Depending on your installation_
-method, these may be installed for you.
+1.13) and PDFMiner_ libraries.  For Debian-based systems, the former
+is provided by the ``python-pypdf`` and package.  (Note that Debian
+prior to Wheezy and Ubuntu prior to 11.10 have a too-old version of
+pyPdf.)  Both are available in PyPI_. Depending on your
+installation_ method, these may be installed for you.
 
 .. _pyPDF: http://pybrary.net/pyPdf/
-.. _ReportLab: http://www.reportlab.com/software/opensource/rl-toolkit/
 .. _PDFMiner: http://www.unixuser.org/~euske/python/pdfminer/
 .. _PyPI: http://pypi.python.org/pypi
 
