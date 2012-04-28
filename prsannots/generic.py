@@ -5,12 +5,12 @@
 
 import os
 from xml.dom import minidom
-import svglib
 from StringIO import StringIO
 import hashlib
 import pyPdf
 from pagetext import PageText, get_layouts, NoSubstringError, MultipleSubstringError
 from pdfannotation import highlight_annotation, text_annotation, add_annotation
+from pdfcontent import pdf_add_content, svg_to_pdf_content
 
 HIGHLIGHT, HIGHLIGHT_TEXT, HIGHLIGHT_DRAWING = 10, 11, 12
 
@@ -158,17 +158,6 @@ class Freehand(object):
         """Uniquely identifies the current annotation."""
         return hashlib.md5(str(self.crop) + str(self.orientation) + self.svg.toxml('utf-8')).digest()
     
-    @property
-    def pdf(self):
-        """The freehand annotation in PDF format, as a pyPdf.pdf.PageObject."""
-        renderer = svglib.SvgRenderer()
-        renderer.render(self.svg)
-        drawing = renderer.finish()
-        
-        pdfstring = svglib.renderPDF.drawToString(drawing)
-        pdfdoc = pyPdf.PdfFileReader(StringIO(pdfstring))
-        return pdfdoc.getPage(0)
-    
     def write_to_pdf(self, page, outpdf, crop=None):
         """Write the annotation to the page which will be in outpdf.
         
@@ -179,7 +168,7 @@ class Freehand(object):
         if crop is None:
             # The reader displays the intersection of the cropBox and the mediaBox.
             crop = intersection(page.cropBox[:], page.mediaBox[:])
-        page.mergeScaledTranslatedPage(self.pdf, *self.scale_offset(crop))
+        pdf_add_content(svg_to_pdf_content(self.svg), page, *self.scale_offset(crop))
     
     def scale_offset(self, pdfcrop):
         svgw, svgh = self.crop[2:]
