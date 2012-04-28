@@ -157,8 +157,8 @@ Alternatively, you can download and unpack the tarball_ or zipball_.
 All of the scripts may be run without installation, assuming you
 have satisfied the requirements_.
 
-.. _tarball: https://github.com/rschroll/prsannots/tarball/master
-.. _zipball: https://github.com/rschroll/prsannots/zipball/master
+.. _tarball: https://github.com/rschroll/prsannots/tarball/version-0.1
+.. _zipball: https://github.com/rschroll/prsannots/zipball/version-0.1
 
 You may install PRSAnnots with the ``setup.py`` script::
 
@@ -182,6 +182,11 @@ missing dependencies for you to install by hand.
 .. _setuptools: http://pypi.python.org/pypi/setuptools
 .. _distribute: http://packages.python.org/distribute/
 .. _pip: http://www.pip-installer.org/en/latest/index.html
+
+Versions
+--------
+0.1 (2012/4/28):
+  Initial release.
 
 Development
 -----------
