@@ -157,8 +157,8 @@ Alternatively, you can download and unpack the tarball_ or zipball_.
 All of the scripts may be run without installation, assuming you
 have satisfied the requirements_.
 
-.. _tarball: https://github.com/rschroll/prsannots/tarball/version-0.1
-.. _zipball: https://github.com/rschroll/prsannots/zipball/version-0.1
+.. _tarball: https://github.com/rschroll/prsannots/tarball/version-0.1.1
+.. _zipball: https://github.com/rschroll/prsannots/zipball/version-0.1.1
 
 You may install PRSAnnots with the ``setup.py`` script::
 
@@ -183,8 +183,27 @@ missing dependencies for you to install by hand.
 .. _distribute: http://packages.python.org/distribute/
 .. _pip: http://www.pip-installer.org/en/latest/index.html
 
+Alternative Windows Installer
+'''''''''''''''''''''''''''''
+We've put together a Windows installer that should take care of all
+of dependencies for you.  You need to have Python installed first;
+here are some `appropriate installers`_.  Then run the `PRSAnnots
+installer`_.  It seems to run okay as a normal user, but you'll need
+to run it as an Administrator in order to get the uninstaller to
+work. The scripts are given appropriate file extensions and placed
+in ``<Python root>\Scripts`` (``C:\Python27\Scripts``, if you accept
+the defaults).  If you can help make a better Windows installer,
+please `let us know`_.
+
+.. _appropriate installers: http://www.python.org/download/releases/2.7.3/
+.. _PRSAnnots installer: https://github.com/downloads/rschroll/prsannots/prsannots-0.1.1.linux-x86_64.exe
+.. _let us know: https://github.com/rschroll/prsannots/issues
+
 Versions
 --------
+0.1.1 (2012/4/29):
+  Fixes some Windows path issues.
+
 0.1 (2012/4/28):
   Initial release.
 
