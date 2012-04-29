@@ -157,7 +157,8 @@ class Main(Frame):
     def prep_file(self, filename):
         if filename is None:
             filename = ''
-        self.file_entry.set(filename)
+        filename = filename.replace('/', os.path.sep)  # For some reason, the Tk file dialog returns
+        self.file_entry.set(filename)                  # a path using '/' instead of os.path.sep
         
         if not filename:
             self.message()

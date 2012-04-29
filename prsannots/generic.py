@@ -50,6 +50,8 @@ class Reader(object):
         raise NotImplementedError, "Subclasses must implement a _get_books() method."
     
     def __getitem__(self, filepath):
+        # The path as saved in the database uses '/' for the path separator.
+        filepath = filepath.replace(os.path.sep, '/')
         for b in self.books:
             if b.file == filepath:
                 return b

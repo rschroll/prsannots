@@ -30,11 +30,20 @@ def test_gs():
     """Test if Ghostscript is installed with the pdfwrite device."""
     try:
         output = subprocess.check_output(['gs', '-h'])
-    except (OSError, subprocess.CallProcessError):
+    except (OSError, subprocess.CalledProcessError):
         return False
     if output.find('pdfwrite') == -1:
         return False
     return True
+
+def len_with_sep(path):
+    """Returns the length of the path, plus a path separator if not present."""
+    if path.endswith(os.path.sep):
+        # Windows mount point: G:\
+        return len(path)
+    else:
+        # UNIX mount point: /media/READER
+        return len(path) + len(os.path.sep)
 
 class NotMountedError(Exception):
     pass
@@ -195,7 +204,7 @@ class Manager(object):
             
         filename = os.path.abspath(filename)
         if filename.startswith(self.mount):
-            filename = filename[len(self.mount) + 1:]
+            filename = filename[len_with_sep(self.mount)]
             if filename in self.library:
                 return filename
             return None
@@ -327,7 +336,7 @@ class Manager(object):
         else:
             shutil.copy(filename, readerfn)
         
-        relfn = readerfn[len(self.mount) + 1:]  # + 1 for separator
+        relfn = readerfn[len_with_sep(self.mount):]
         self.library[relfn] = { 'filename': filename, 'infix': infix, 'annhash': 0, 'dice_map': dice_map }
         return relfn
     
@@ -380,7 +389,7 @@ class Manager(object):
         
         absrp = os.path.abspath(readerpath)
         if absrp.startswith(self.mount):
-            readerpath = absrp[len(self.mount) + 1:]
+            readerpath = absrp[len_with_sep(self.mount):]
         if self.in_library(readerpath):
             raise IOError, 'Reader file %s already in library' % readerpath
         if not os.path.exists(os.path.join(self.mount, readerpath)):
