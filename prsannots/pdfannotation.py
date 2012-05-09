@@ -61,9 +61,12 @@ def highlight_annotation(quadpoints, contents=None, author=None,
     qpl = []
     for x0,y0,x1,y1 in quadpoints:
         qpl.extend([x0, y1, x1, y1, x0, y0, x1, y0])
-    # Annotation goes at upper left corner of /Rect.  But this doesn't
-    # seem to matter for text markup annotations.
-    rect = qpl[:2] + qpl[:2]
+    # The rectangle needs to contain the highlighted region for Evince
+    # and Xpdf to display it.
+    def quadpoints_col(i):
+        return [pts[i] for pts in quadpoints]
+    rect = [min(quadpoints_col(0)), min(quadpoints_col(1)),
+            max(quadpoints_col(2)), max(quadpoints_col(3))]
     
     retval = _markup_annotation(rect, contents, author, subject, color, alpha, flag)
     retval[NameObject('/Subtype')] = NameObject('/Highlight')
