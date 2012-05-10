@@ -6,6 +6,8 @@
 from datetime import datetime
 from pyPdf.generic import *
 
+YELLOW = [0.95, 0.9, 0.2]
+
 def float_array(lst):
     return ArrayObject([FloatObject(i) for i in lst])
 
@@ -52,7 +54,7 @@ def _popup_annotation(parent, rect=None):
 
 
 def highlight_annotation(quadpoints, contents=None, author=None,
-                         subject=None, color=[1,1,0], alpha=1, flag=4):
+                         subject=None, color=YELLOW, alpha=1, flag=4):
     """Create a 'Highlight' annotation that covers the area given by quadpoints.
     
     Inputs: quadpoints  A list of rectangles to be highlighted as part of this
@@ -90,7 +92,7 @@ def highlight_annotation(quadpoints, contents=None, author=None,
     retval[NameObject('/QuadPoints')] = float_array(qpl)
     return retval
 
-def text_annotation(rect, contents=None, author=None, subject=None, color=[0.94,0.86,0.33],
+def text_annotation(rect, contents=None, author=None, subject=None, color=YELLOW,
                     alpha=1, flag=4, icon=None, open_=False, state=None, state_model=None):
     """Create a 'Text' annotation, a sticky note at the location rect.
     
