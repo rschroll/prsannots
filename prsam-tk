@@ -257,7 +257,7 @@ if __name__ == '__main__':
                     needs_save = True
             else:
                 if tkMessageBox.askyesno(title="Create library?",
-                        message="There is no library on this computer for the" +
+                        message="There is no library on this computer for the " +
                                 "reader at %s.\n\n" % mount +
                                 "Create a new library?"):
                     try:
