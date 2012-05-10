@@ -9,20 +9,22 @@ from pyPdf.generic import *
 def float_array(lst):
     return ArrayObject([FloatObject(i) for i in lst])
 
+def now():
+    # Python timezone handling is a messs, so just use UTC
+    return TextStringObject(datetime.utcnow().strftime("D:%Y%m%d%H%M%SZ00'00"))
+
 def _markup_annotation(rect, contents=None, author=None, subject=None,
                        color=None, alpha=1, flag=4):
     """Set shared properties of all markup annotations."""
-    
-    # Python timezone handling is a messs, so just use UTC
-    now = datetime.utcnow().strftime("D:%Y%m%d%H%M%SZ00'00")
     
     retval = DictionaryObject({ NameObject('/CA'): FloatObject(alpha),
                                 NameObject('/F'): NumberObject(flag),
                                 NameObject('/Rect'): float_array(rect),
                                 NameObject('/Type'): NameObject('/Annot'),
                                 NameObject('/CreationDate'): TextStringObject(now),
-                                NameObject('/M'): TextStringObject(now),
+                                NameObject('/M'): now(),
                              })
+    retval.popup = False  # Whether to add an explicit popup when adding to page
     if contents is not None:
         retval[NameObject('/Contents')] = TextStringObject(contents)
     if author is not None:
@@ -32,6 +34,21 @@ def _markup_annotation(rect, contents=None, author=None, subject=None,
     if color is not None:
         retval[NameObject('/C')] = float_array(color)
     return retval
+
+def _popup_annotation(parent, rect=None):
+    """Create a 'Popup' annotation connected to parent (an indirect object)."""
+    
+    if rect is None:
+        # Make Golden ratio rectangle lined up at right-hand side of parent
+        _, _, x, y = parent.getObject()['/Rect']
+        rect = [x, y-100, x+162, y]
+    
+    return DictionaryObject({ NameObject('/Type'): NameObject('/Annot'),
+                              NameObject('/Subtype'): NameObject('/Popup'),
+                              NameObject('/M'): now(),
+                              NameObject('/Rect'): float_array(rect),
+                              NameObject('/Parent'): parent,
+                           })
 
 
 def highlight_annotation(quadpoints, contents=None, author=None,
@@ -105,6 +122,7 @@ def text_annotation(rect, contents=None, author=None, subject=None, color=[0.94,
     
     """
     retval = _markup_annotation(rect, contents, author, subject, color, alpha, flag)
+    retval.popup = True
     retval[NameObject('/Subtype')] = NameObject('/Text')
     retval[NameObject('/Open')] = BooleanObject(open_)
     if icon is not None:
@@ -126,6 +144,12 @@ def add_annotation(outpdf, page, annot):
         page['/Annots'].append(indir)
     else:
         page[NameObject('/Annots')] = ArrayObject([indir])
+    
+    if annot.popup:
+        popup = _popup_annotation(indir)
+        indir_popup = outpdf._addObject(popup)
+        annot[NameObject('/Popup')] =  indir_popup
+        page['/Annots'].append(indir_popup)
 
 
 if __name__ == '__main__':
