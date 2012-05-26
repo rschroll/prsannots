@@ -278,5 +278,5 @@ class Highlight(object):
             pcrop = intersection(page.cropBox[:], page.mediaBox[:])
             x,y = pcrop[0]+10, pcrop[3]-10-page.prsannot_vskip # Add a little margin
             page.prsannot_vskip += 25
-            annot = text_annotation([x, y, x, y], self.text_content, 'Sony eReader')
+            annot = text_annotation([x, y-20, x+20, y], self.text_content, 'Sony eReader')
         add_annotation(outpdf, page, annot)
