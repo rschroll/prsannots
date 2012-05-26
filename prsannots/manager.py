@@ -347,8 +347,8 @@ class Manager(object):
                 
                 diceargs    The arguments to be passed to pdfdice.dice().
                             As of this writing, a tuple of the form
-                            (ncols, nrows, [overlap]).  See pdfdice
-                            documentation for more details.
+                            (ncols, nrows, [crop, [overlap]]).  See
+                            pdfdice documentation for more details.
                 
                 Additional keyword arguments are the same as for add_pdf().
         

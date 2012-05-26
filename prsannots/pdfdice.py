@@ -13,8 +13,10 @@ from generic import intersection
 
 PAGE_BOXES = ("/MediaBox", "/CropBox", "/BleedBox", "/TrimBox", "/ArtBox")
 
+_mm = 72 / 25.4
+UNITS = {'pt': 1, 'in': 72, 'mm': _mm, 'cm': 10*_mm}
 
-def dice(inpdf, ncols, nrows, overlap=0.05):
+def dice(inpdf, ncols, nrows, crop=0, overlap=0.05):
     """Dice each page in the PDF file into a number of sub-pages.
     
     Inputs: inpdf       The pyPdf.PdfFileReader to be diced.
@@ -22,10 +24,15 @@ def dice(inpdf, ncols, nrows, overlap=0.05):
             ncols       Each page will be diced into ncols columns and
             nrows       nrows rows.
             
+            crop        The amount to crop from the edges of page in
+                        Postscript points (1/72 in).  Either a number or
+                        as list of 1, 2 (horizontal, vertical), or 4
+                        (left, bottom, right, top) numbers.
+            
             overlap     The amount of overlap for the sub-pages, as a
-                        percentage of the page size.  Either a float or
-                        a list of two floats for the horizontal and
-                        vertical overlaps.
+                        percentage of the cropped page size.  Either a
+                        float or a list of two floats for the horizontal
+                        and vertical overlaps.
     
     Output: outpdf      A pyPdf.PdfFileWriter for the diced PDF.
             
@@ -36,12 +43,24 @@ def dice(inpdf, ncols, nrows, overlap=0.05):
                         the diced page on the original page.
     
     """
+    if isinstance(crop, (float, int)):
+        crop = (crop,)
+    if len(crop) == 1:
+        crop = (crop[0], crop[0], crop[0], crop[0])
+    elif len(crop) == 2:
+        crop = (crop[0], crop[1], crop[0], crop[1])
+    elif len(crop) != 4:
+        raise ValueError, "crop must be length 1, 2, or 4."
+    
     if isinstance(overlap, (float, int)):
         overlap = (overlap, overlap)
+    if len(overlap) == 1:
+        overlap = (overlap[0], overlap[0])
+    
     outpdf = PdfFileWriter()
     dice_map = []
     for i, page in enumerate(inpdf.pages):
-        bboxes = dice_page(outpdf, page, ncols, nrows, overlap)
+        bboxes = dice_page(outpdf, page, ncols, nrows, crop, overlap)
         for bbox in bboxes:
             dice_map.append((i, bbox))
     return outpdf, dice_map
@@ -106,8 +125,9 @@ def copy_page(page):
             newpage[NameObject(attr)] = RectangleObject(list(page[attr]))
     return newpage
 
-def dice_page(outpdf, page, ncols, nrows, overlap):
-    box = map(float, intersection(page.cropBox[:], page.mediaBox[:]))
+def dice_page(outpdf, page, ncols, nrows, crop, overlap):
+    obox = map(float, intersection(page.cropBox[:], page.mediaBox[:]))
+    box = (obox[0] + crop[0], obox[1] + crop[1], obox[2] - crop[2], obox[3] - crop[3])
     width = (box[2] - box[0]) * ((1. - overlap[0])/ncols + overlap[0])
     xspace = (box[2] - box[0]) * (1. - overlap[0])/ncols
     height = (box[3] - box[1]) * ((1. - overlap[1])/nrows + overlap[1])
@@ -133,17 +153,16 @@ if __name__ == '__main__':
         ncols = int(sys.argv[2])
         nrows = int(sys.argv[3])
     except (IndexError, IOError):
-        print "Usage: %s file.pdf ncols nrows [overlap]" % sys.argv[0]
+        print "Usage: %s file.pdf ncols nrows [overlap [crop]]" % sys.argv[0]
         raise SystemExit
-    try:
-        overlapx = float(sys.argv[4])
-    except IndexError:
-        overlapx = 0.05
-    try:
-        overlapy = float(sys.argv[5])
-    except IndexError:
-        overlapy = overlapx
     
-    outpdf, _ = dice(inpdf, ncols, nrows, (overlapx, overlapy))
+    overlap = map(float, sys.argv[4:6])
+    if not overlap:
+        overlap = 0.05
+    crop = map(float, sys.argv[6:10])
+    if not crop:
+        crop = 0
+    
+    outpdf, _ = dice(inpdf, ncols, nrows, crop, overlap)
     write_pdf(outpdf, 'pdfdice.pdf')
     print "Diced PDF file output to pdfdice.pdf"
