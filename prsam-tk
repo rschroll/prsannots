@@ -19,12 +19,15 @@
 import os
 import sys
 import pyPdf
+import tempfile
 
 from Tkinter import *
 import tkMessageBox
 import tkFileDialog
 
 from prsannots.manager import Manager, NotMountedError
+from prsannots.pdfdice import UNITS
+from prsannots.openfile import open_file
 
 class EntryValue(Entry):
     
@@ -53,7 +56,7 @@ class Main(Frame):
         n_sync = len(self.manager.needing_sync)
         self.master.protocol('WM_DELETE_WINDOW', self.close)
         
-        self.file_entry = EntryValue(self, width=35, state='readonly')
+        self.file_entry = EntryValue(self, width=30, state='readonly')
         self.file_entry.grid(row=0, column=0, sticky=E+W)
         self.file_button = Button(self, text='...', command=self.load_file)
         self.file_button.grid(row=0, column=1, sticky=W)
@@ -61,7 +64,7 @@ class Main(Frame):
         self.add_frame = Frame(self)
         self.add_frame.grid(row=1, column=0, columnspan=2, sticky=E+W)
         
-        Label(self.add_frame, text="Add file to library", font='TkHeadingFont').grid(row=0, column=0, columnspan=7, pady=(0,2))
+        Label(self.add_frame, text="Add file to library", font='TkHeadingFont').grid(row=0, column=0, columnspan=6, pady=(0,2))
         
         Label(self.add_frame, text="Dice PDF into").grid(row=1, column=0, columnspan=2, sticky=W)
         self.ncols_entry = SpinboxValue(self.add_frame, from_=1, to=10, width=2, justify=RIGHT)
@@ -79,15 +82,36 @@ class Main(Frame):
         self.olv_entry.grid(row=2, column=4, sticky=E)
         Label(self.add_frame, text="vertical").grid(row=2, column=5, sticky=W)
         
-        Label(self.add_frame, text="Title").grid(row=3, column=0, sticky=E)
-        self.title_entry = EntryValue(self.add_frame)
-        self.title_entry.grid(row=3, column=1, columnspan=5, sticky=E+W)
+        Label(self.add_frame, text="Crop").grid(row=3, column=0, columnspan=2, sticky=W)
+        self.cropl = SpinboxValue(self.add_frame, from_=0, to=1000, increment=0.1, width=4, justify=RIGHT)
+        self.cropl.grid(row=3, column=2, sticky=E)
+        Label(self.add_frame, text="left").grid(row=3, column=3, sticky=W)
+        self.cropb = SpinboxValue(self.add_frame, from_=0, to=1000, increment=0.1, width=4, justify=RIGHT)
+        self.cropb.grid(row=3, column=4, sticky=E)
+        Label(self.add_frame, text="bottom").grid(row=3, column=5, sticky=W)
         
-        Label(self.add_frame, text="Author").grid(row=4, column=0, sticky=E)
+        Label(self.add_frame, text="units:").grid(row=4, column=0, columnspan=1, sticky=E)
+        self.cropu = SpinboxValue(self.add_frame, values=UNITS.keys(), width=3)
+        self.cropu.grid(row=4, column=1, sticky=W)
+        self.cropr = SpinboxValue(self.add_frame, from_=0, to=1000, increment=0.1, width=4, justify=RIGHT)
+        self.cropr.grid(row=4, column=2, sticky=E)
+        Label(self.add_frame, text="right").grid(row=4, column=3, sticky=W)
+        self.cropt = SpinboxValue(self.add_frame, from_=0, to=1000, increment=0.1, width=4, justify=RIGHT)
+        self.cropt.grid(row=4, column=4, sticky=E)
+        Label(self.add_frame, text="top").grid(row=4, column=5, sticky=W)
+        
+        Label(self.add_frame, text="Title").grid(row=5, column=0, sticky=E)
+        self.title_entry = EntryValue(self.add_frame)
+        self.title_entry.grid(row=5, column=1, columnspan=5, sticky=E+W)
+        
+        Label(self.add_frame, text="Author").grid(row=6, column=0, sticky=E)
         self.author_entry = EntryValue(self.add_frame)
-        self.author_entry.grid(row=4, column=1, columnspan=5, sticky=E+W)
+        self.author_entry.grid(row=6, column=1, columnspan=5, sticky=E+W)
+        
+        self.preview_button = Button(self.add_frame, text='Preview', command=self.preview)
+        self.preview_button.grid(row=7, column=0, columnspan=2, sticky=W)
         self.add_button = Button(self.add_frame, text='Add', command=self.add)
-        self.add_button.grid(row=3, column=6, rowspan=2, sticky=S)
+        self.add_button.grid(row=7, column=5, sticky=E)
         
         self.import_frame = Frame(self)
         self.import_frame.grid(row=1, column=0, columnspan=2, sticky=N+S+E+W)
@@ -183,11 +207,16 @@ class Main(Frame):
             self.title_entry.set(pdf.documentInfo.get('/Title', ''))
             self.author_entry.set(pdf.documentInfo.get('/Author', ''))
     
+    def get_dice_args(self):
+        return (int(self.ncols_entry.get()), int(self.nrows_entry.get()),
+                [float(getattr(self, a).get()) * UNITS[self.cropu.get()]
+                 for a in ('cropl', 'cropb', 'cropr', 'cropt')],
+                (float(self.olh_entry.get()), float(self.olv_entry.get())))
+    
     def add(self):
         try:
             self.manager.add_diced_pdf(self.file_entry.get(),
-                                       (int(self.ncols_entry.get()), int(self.nrows_entry.get()),
-                                        (float(self.olh_entry.get()), float(self.olv_entry.get()))),
+                                       self.get_dice_args(),
                                        title=self.title_entry.get(), author=self.author_entry.get())
         except (ValueError, IOError, pyPdf.utils.PdfReadError), e:
             tkMessageBox.showerror(title="Add file",
@@ -196,6 +225,23 @@ class Main(Frame):
             self.reset()
             self.needs_save = True
             self.message("File added to library.")
+    
+    def preview(self):
+        fh, preview = tempfile.mkstemp()
+        os.close(fh)
+        try:
+            self.manager.add_diced_pdf(self.file_entry.get(),
+                                       self.get_dice_args(),
+                                       title=self.title_entry.get(), author=self.author_entry.get(),
+                                       preview=preview)
+        except (ValueError, IOError, pyPdf.utils.PdfReadError), e:
+            tkMessageBox.showerror(title="Preview file",
+                                   message="Could not create preview file.\n\n" + str(e))
+        else:
+            if not open_file(preview):
+                tkMessageBox.showerror(title="Preview file",
+                                       message="Could not open default PDF viewer.\n\n"
+                                       "Preview file saved as %s" % preview);
     
     def load_import_dir(self):
         syncdir = tkFileDialog.askdirectory(title="Select mount point of reader", mustexist=True)

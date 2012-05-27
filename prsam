@@ -72,10 +72,10 @@ Remove files from the library that are no longer on the reader.
 import os
 import sys
 import tempfile
-import subprocess
 from optparse import OptionParser
 from prsannots.manager import Manager, NotMountedError
 from prsannots.pdfdice import UNITS
+from prsannots.openfile import open_file
 try:
     from gi.repository import Notify
     if not Notify.init('PRS Annotation Manager'):
@@ -202,17 +202,9 @@ def do_add(args, options):
             print_err_exit("File already on reader.  Use --force to add it again.\n"
                            "(You probably also want to set --infix, so both don't sync to the same place.)")
     if preview:
-        try:
-            os.startfile(preview)
-        except AttributeError:
-            command = 'xdg-open'
-            if sys.platform.startswith('darwin'):
-                command = 'open'
-            try:
-                subprocess.call((command, preview))
-            except OSError:
-                print_err_exit("Could not start your default PDF viewer.\n"
-                               "The preview file is saved as %s" % preview)
+        if not open_file(preview):
+            print_err_exit("Could not start your default PDF viewer.\n"
+                           "The preview file is saved as %s" % preview)
     else:
         m.save()
 
