@@ -250,7 +250,7 @@ class Highlight(object):
         if self.content_type is HIGHLIGHT_TEXT:
             doc = minidom.parse(os.path.join(self.book.reader.path, self.content))
             text = doc.getElementsByTagName('text')[0]
-            return text.childNodes[0].toxml() + self.message
+            return text.childNodes[0].data + self.message
         if self.content_type is HIGHLIGHT_DRAWING:
             return "Can't handle drawings yet.  (Sorry.)" + self.message
     
