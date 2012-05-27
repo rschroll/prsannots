@@ -238,7 +238,8 @@ class Manager(object):
         self.update_settings(**kw)
     
     def add_pdf(self, filename, dice_pdf=None, dice_map=None, title=None,
-                author=None, infix=None, reader_dir=None, gs=None, allow_dups=False):
+                author=None, infix=None, reader_dir=None, gs=None,
+                allow_dups=False, preview=None):
         """Add a PDF file to the reader, to be managed by this manager.
         
         Inputs: filename    The location on the computer of the PDF file.
@@ -272,6 +273,11 @@ class Manager(object):
                 
                 allow_dups  Whether to allow a file to be entered into
                             the library multiple times.  Default False.
+                
+                preview     A filename to save the PDF file to, instead
+                            of saving it on the reader.  If this is not
+                            None, then the PDF will not be added to the
+                            reader.
         
         Output: The filename to which the file was saved on the reader.
         
@@ -292,18 +298,21 @@ class Manager(object):
         if gs is None:
             gs = self.settings['gs']
         
-        readerfn = os.path.join(self.mount, reader_dir, basename)
-        while os.path.exists(readerfn):
-            parts = readerfn.split('.', 2)
-            if len(parts) == 2:
-                num = 0
-            else:
-                try:
-                    num = int(parts[1]) + 1
-                except ValueError:
-                    parts = ['.'.join(parts[:-1]), parts[-1]]
+        if preview:
+            readerfn = preview
+        else:
+            readerfn = os.path.join(self.mount, reader_dir, basename)
+            while os.path.exists(readerfn):
+                parts = readerfn.split('.', 2)
+                if len(parts) == 2:
                     num = 0
-            readerfn = '.'.join((parts[0], str(num), parts[-1]))
+                else:
+                    try:
+                        num = int(parts[1]) + 1
+                    except ValueError:
+                        parts = ['.'.join(parts[:-1]), parts[-1]]
+                        num = 0
+                readerfn = '.'.join((parts[0], str(num), parts[-1]))
         
         orig_pdf = pyPdf.PdfFileReader(open(filename, 'rb'))
         # If we're changing the title or author, we need to rewrite the
@@ -336,9 +345,12 @@ class Manager(object):
         else:
             shutil.copy(filename, readerfn)
         
-        relfn = readerfn[len_with_sep(self.mount):]
-        self.library[relfn] = { 'filename': filename, 'infix': infix, 'annhash': 0, 'dice_map': dice_map }
-        return relfn
+        if preview:
+            return preview
+        else:
+            relfn = readerfn[len_with_sep(self.mount):]
+            self.library[relfn] = { 'filename': filename, 'infix': infix, 'annhash': 0, 'dice_map': dice_map }
+            return relfn
     
     def add_diced_pdf(self, filename, diceargs, **kw):
         """Add a PDF file to the reader, diced as specified.
