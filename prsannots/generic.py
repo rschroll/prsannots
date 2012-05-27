@@ -106,7 +106,7 @@ class Book(object):
             self._page_texts[page] = PageText(self.pdf_layout(page))
         return self._page_texts[page]
     
-    def write_annotated_pdf(self, outfd, pdf=None, dice_map=None):
+    def write_annotated_pdf(self, outfd, pdf=None, dice_map=None, **kw):
         """Write an annotated version of the PDF file.
         
         Inputs: outfd       A file object, to which the PDF is output.
@@ -115,6 +115,9 @@ class Book(object):
                 
                 dice_map    The dice map describing how the PDF on the
                             reader was made from the original PDF file.
+                
+                Other keywords are passed on to the annotations'
+                write_to_pdf() methods.
         
         """
         if pdf is None:
@@ -127,7 +130,7 @@ class Book(object):
         for i, page in enumerate(pdf.pages):
             while j < len(dice_map) and dice_map[j][0] == i:
                 while k < len(self.annotations) and self.annotations[k].page == j:
-                    self.annotations[k].write_to_pdf(page, outpdf, dice_map[j][1])
+                    self.annotations[k].write_to_pdf(page, crop=dice_map[j][1], outpdf=outpdf, **kw)
                     k += 1
                 j += 1
             outpdf.addPage(page)
@@ -160,13 +163,8 @@ class Freehand(object):
         """Uniquely identifies the current annotation."""
         return hashlib.md5(str(self.crop) + str(self.orientation) + self.svg.toxml('utf-8')).digest()
     
-    def write_to_pdf(self, page, outpdf, crop=None):
-        """Write the annotation to the page which will be in outpdf.
-        
-        Note that outpdf is not used in this function; it is included only
-        to have the same signature as Highlight.write_to_pdf().
-        
-        """
+    def write_to_pdf(self, page, crop=None, **kw):
+        """Write the annotation to the page which will be in outpdf."""
         if crop is None:
             # The reader displays the intersection of the cropBox and the mediaBox.
             crop = intersection(page.cropBox[:], page.mediaBox[:])
@@ -262,7 +260,7 @@ class Highlight(object):
         return hashlib.md5((str(self.page) + unicode(self.area)
                             + unicode(self.text_content)).encode('utf-8')).digest()
     
-    def write_to_pdf(self, page, outpdf, crop=None):
+    def write_to_pdf(self, page, outpdf, crop=None, fake_highlight_text=False, **kw):
         """Write the annotation to page in outpdf."""
         if crop is None:
             # PDFMiner reports positions relative to the mediaBox.
@@ -270,7 +268,19 @@ class Highlight(object):
         if self.bboxes is not None:
             shifted_bboxes = [(bb[0] + crop[0], bb[1] + crop[1], bb[2] + crop[0], bb[3] + crop[1])
                               for bb in self.bboxes]
-            annot = highlight_annotation(shifted_bboxes, self.text_content, 'Sony eReader')
+            if (self.text_content and fake_highlight_text):
+                annot = highlight_annotation(shifted_bboxes, None, 'Sony eReader')
+                pcrop = intersection(page.cropBox[:], page.mediaBox[:])
+                bb_center = sum((bb[0] + bb[2])/2 for bb in shifted_bboxes) / len(shifted_bboxes)
+                if bb_center < (pcrop[0] + pcrop[2]) / 2:
+                    x = 10
+                else:
+                    x = pcrop[2] - 30
+                y = shifted_bboxes[0][1]
+                ta = text_annotation([x, y-20, x+20, y], self.text_content, 'Sony eReader')
+                add_annotation(outpdf, page, ta)
+            else:
+                annot = highlight_annotation(shifted_bboxes, self.text_content, 'Sony eReader')
         else:
             if not hasattr(page, 'prsannot_vskip'):
                 page.prsannot_vskip = 0

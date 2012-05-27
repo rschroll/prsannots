@@ -53,7 +53,8 @@ class Manager(object):
     be retrieved.
     
     """
-    _base_settings = { 'infix': 'annot', 'reader_dir': 'download', 'gs': None}
+    _base_settings = {'infix': 'annot', 'reader_dir': 'download', 'gs': None,
+                      'fake_highlight': False}
     _id_file = '.prsannots'
     
     def __init__(self):
@@ -514,7 +515,8 @@ class Manager(object):
                 raise IOError, "Original PDF file %s does not exist." % pdffn
         
         book.write_annotated_pdf(open(annfn, 'wb'), pyPdf.PdfFileReader(open(pdffn, 'rb')),
-                                 libentry['dice_map'])
+                                 libentry['dice_map'],
+                                 fake_highlight_text=self.settings['fake_highlight'])
         libentry['annhash'] = book.hash
         return True
     

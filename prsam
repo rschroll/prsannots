@@ -114,6 +114,8 @@ def config_options(options):
         config['reader_dir'] = options.readerdir
     if options.gs is not None:
         config['gs'] = options.gs
+    if options.fake_highlight is not None:
+        config['fake_highlight'] = options.fake_highlight
     return config
 
 def do_init(args, options):
@@ -146,7 +148,7 @@ def do_config(args, options):
     else:
         print "Library Settings:"
         for k,v in m.settings.items():
-            print " %10s  %s" % (k, v)
+            print " %15s  %s" % (k, v)
 
 def do_add(args, options):
     m = get_manager(options.mount)
@@ -313,6 +315,10 @@ def main(args):
         add_config_options()
         parser.add_option('--update-mount', action='store_true', default=False,
                           help='update the stored mount point to that specified by --mount')
+        parser.add_option('--fake-highlight-on', action='store_true', dest='fake_highlight',
+                          help='fake highlight annotations.  (For Evince and family.)')
+        parser.add_option('--fake-highlight-off', action='store_false', dest='fake_highlight',
+                          help='use real highlight annotations')
         function = do_config
         nargs = 0
     elif command == 'add':
