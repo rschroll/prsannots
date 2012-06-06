@@ -133,7 +133,7 @@ compatible with Python 3.
 
 In addition to the standard library, it requires the pyPdf_ (>=
 1.13) and PDFMiner_ libraries.  For Debian-based systems, the former
-is provided by the ``python-pypdf`` and package.  (Note that Debian
+is provided by the ``python-pypdf`` package.  (Note that Debian
 prior to Wheezy and Ubuntu prior to 11.10 have a too-old version of
 pyPdf.)  Both are available in PyPI_. Depending on your
 installation_ method, these may be installed for you.
@@ -190,8 +190,12 @@ of dependencies for you.  You need to have Python installed first;
 here are some `appropriate installers`_.  Then run the `PRSAnnots
 installer`_.  It seems to run okay as a normal user, but you'll need
 to run it as an Administrator in order to get the uninstaller to
-work. The scripts are given appropriate file extensions and placed
-in ``<Python root>\Scripts`` (``C:\Python27\Scripts``, if you accept
+work. (Note that you may get a warning from your SmartScreen filter
+that the installer is "not commonly downloaded and not signed."  I
+believe this basically mean that Microsoft has no idea whether the
+installer is dangerous; it's not saying that something's wrong.)
+The scripts are given appropriate file extensions and placed in
+``<Python root>\Scripts`` (``C:\Python27\Scripts``, if you accept
 the defaults).  If you can help make a better Windows installer,
 please `let us know`_.
 
