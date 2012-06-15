@@ -249,14 +249,18 @@ def do_sync(args, options):
     
     if options.notify:
         notify("Beginning sync")
-    if options.verbose:
-        need_sync = m.needing_sync
-        for fn in need_sync:
+    need_sync = m.needing_sync
+    for fn in need_sync:
+        if options.verbose:
             print "Syncing %s ..." % m.library[fn]['filename']
+        try:
             m.sync_pdf(fn)
-        num = len(need_sync)
-    else:
-        num = m.sync()
+        except Exception, e:
+            msg = "Error syncing %s: %s" % (fn, e)
+            print msg
+            if options.notify:
+                notify(msg)
+    num = len(need_sync)
     if options.notify:
         if num == 0:
             notify("Already up-to-date")

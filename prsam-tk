@@ -273,7 +273,11 @@ class Main(Frame):
             self.sync_button.config(text="Syncing %i/%i..." % (i+1, len(need_sync)), relief=SUNKEN)
             self.solo_message("Syncing %s" % os.path.basename(filename))
             self.master.update_idletasks()  # Update the sync_button and status text
-            self.manager.sync_pdf(filename)
+            try:
+                self.manager.sync_pdf(filename)
+            except Exception, e:
+                tkMessageBox.showerror(title="Syncing file",
+                                       message="Error syncing %s: %s" % (filename, e))
         self.sync_button.grid_remove()
         self.solo_message()
         self.needs_save = True
