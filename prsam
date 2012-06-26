@@ -306,12 +306,19 @@ def main(args):
         parser.add_option('--readerdir', metavar="DIR", help='directory on reader to store PDFs')
         add_gs_options()
     
+    def add_highlight_options():
+        parser.add_option('--fake-highlight-on', action='store_true', dest='fake_highlight',
+                          help='fake highlight annotations.  (For Evince and family.)')
+        parser.add_option('--fake-highlight-off', action='store_false', dest='fake_highlight',
+                          help='use real highlight annotations')
+    
     if command == 'init':
         set_usage_description(USAGE[1])
         parser.remove_option('--mount')
         parser.add_option('-f', '--force', action='store_true', default=False,
                           help='initialize a new library even if one already exists')
         add_config_options()
+        add_highlight_options()
         function = do_init
         nargs = 1
     elif command == 'config':
@@ -319,10 +326,7 @@ def main(args):
         add_config_options()
         parser.add_option('--update-mount', action='store_true', default=False,
                           help='update the stored mount point to that specified by --mount')
-        parser.add_option('--fake-highlight-on', action='store_true', dest='fake_highlight',
-                          help='fake highlight annotations.  (For Evince and family.)')
-        parser.add_option('--fake-highlight-off', action='store_false', dest='fake_highlight',
-                          help='use real highlight annotations')
+        add_highlight_options()
         function = do_config
         nargs = 0
     elif command == 'add':
