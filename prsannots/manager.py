@@ -29,7 +29,7 @@ CONFIG_EXT = '.prc'
 def test_gs():
     """Test if Ghostscript is installed with the pdfwrite device."""
     try:
-        output = subprocess.check_output(['gs', '-h'])
+        output, _ = subprocess.Popen(['gs', '-h'], stdout=subprocess.PIPE).communicate()
     except (OSError, subprocess.CalledProcessError):
         return False
     if output.find('pdfwrite') == -1:
