@@ -75,11 +75,11 @@ def polyline(node):
         attrval = node.getAttribute(attr)
         if attrval:
             commands.append(attr_func_map[attr](attrval))
-        
-        pts = node.getAttribute('points').replace(',', ' ').split()
-        xs, ys = pts[2::2], pts[3::2]
-        segs = ['%s %s l' % (x, y) for x, y in zip(xs, ys)]
-        commands.append('%s %s m %s S' % (pts[0], pts[1], ' '.join(segs)))
+    
+    pts = node.getAttribute('points').replace(',', ' ').split()
+    xs, ys = pts[2::2], pts[3::2]
+    segs = ['%s %s l' % (x, y) for x, y in zip(xs, ys)]
+    commands.append('%s %s m %s S' % (pts[0], pts[1], ' '.join(segs)))
     
     commands.insert(0, 'q')
     commands.append('Q')
@@ -94,7 +94,7 @@ if __name__ == '__main__':
     import pyPdf
     
     if len(sys.argv) != 3:
-        print "Usage: %s file.pdf file.svg" % svs.argv[0]
+        print "Usage: %s file.pdf file.svg" % sys.argv[0]
         sys.exit(1)
     
     inpdf = pyPdf.PdfFileReader(open(sys.argv[1], 'rb'))
