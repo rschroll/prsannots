@@ -63,16 +63,12 @@ class PageText(object):
     
     def _get_chars(self, char):
         t = char.get_text()
-        if isinstance(char, LTAnon):
-            if t == ' ':
-                return ''
+        if isinstance(char, LTAnon):  # Either a newline or space
             if t == '\n':
                 if self._chars[-1] == '-':
                     del(self._chars[-1])
                     del(self._pos[-1])
-                    return ''
-                else:
-                    return ' '
+            return ''
         return LIGATURES.get(t, t)
     
     def add(self, char, lnum):

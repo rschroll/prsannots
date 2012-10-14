@@ -227,7 +227,8 @@ class Highlight(object):
         if not hasattr(self, '_bboxes'):
             if isinstance(self.area, basestring):
                 try:
-                    self._bboxes = self.book.page_text(self.page).box_substring(self.area, self.strict)
+                    self._bboxes = self.book.page_text(self.page).box_substring(
+                        self.area.replace(' ', ''), self.strict)
                 except NoSubstringError:
                     self.message = '\n\nThis note was supposed to be attached to the following ' \
                                    'text, which was not found on this page.\n' + self.area
