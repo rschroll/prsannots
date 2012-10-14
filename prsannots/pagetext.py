@@ -88,10 +88,10 @@ class PageText(object):
     def load(self, page):
         """Add the text from the page (a pdfminer.layout.LTPage)."""
         
-        for box in page._objs:
+        for box in page:
             if isinstance(box, LTTextBox):
-                for l, line in enumerate(box._objs):
-                    for char in line._objs:
+                for l, line in enumerate(box):
+                    for char in line:
                         self.add(char, l)
     
     def bboxes(self, start, length):
