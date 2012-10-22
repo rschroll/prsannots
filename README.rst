@@ -71,14 +71,19 @@ Sync all PDFs with annotations changed since the last sync.
   prsam --help
 
 Gives information on the various commands you can give ``prsam``.
+This information is also available online_.
+
+.. _online: https://github.com/rschroll/prsannots/wiki/All-Commands
 
 prsam-tk: A graphical Annotation Manager
 ''''''''''''''''''''''''''''''''''''''''
-``prsam-tk`` provides a simple graphic interface to the annotation
+``prsam-tk`` provides a `simple graphic interface`_ to the annotation
 manager.  It provides a window where you can select PDF files to add
 to the library, and it will help initialize a library if none
 exists.  It lacks many of the features in ``prsam``.  But it uses
 the same library, so you can switch between them as you like.
+
+.. _simple graphic interface: https://github.com/rschroll/prsannots/wiki/Screenshot-Tour
 
 getannotations: The simple, do-it-now approach
 ''''''''''''''''''''''''''''''''''''''''''''''
@@ -157,8 +162,8 @@ Alternatively, you can download and unpack the tarball_ or zipball_.
 All of the scripts may be run without installation, assuming you
 have satisfied the requirements_.
 
-.. _tarball: https://github.com/rschroll/prsannots/tarball/version-0.1.1
-.. _zipball: https://github.com/rschroll/prsannots/zipball/version-0.1.1
+.. _tarball: https://github.com/rschroll/prsannots/tarball/version-0.2
+.. _zipball: https://github.com/rschroll/prsannots/zipball/version-0.2
 
 You may install PRSAnnots with the ``setup.py`` script::
 
@@ -200,11 +205,15 @@ the defaults).  If you can help make a better Windows installer,
 please `let us know`_.
 
 .. _appropriate installers: http://www.python.org/download/releases/2.7.3/
-.. _PRSAnnots installer: https://github.com/downloads/rschroll/prsannots/prsannots-0.1.1.linux-x86_64.exe
+.. _PRSAnnots installer: https://github.com/downloads/rschroll/prsannots/prsannots-0.2.linux-x86_64.exe
 .. _let us know: https://github.com/rschroll/prsannots/issues
 
 Versions
 --------
+0.2 (2012/10/21):
+  Adds cropping PDFs, previewing cropped and diced files, better
+  handling of PDF annotations, and a number of bug fixes.
+
 0.1.1 (2012/4/29):
   Fixes some Windows path issues.
 
@@ -250,13 +259,18 @@ PDF viewers:
   the PDF annotation mechanism, which is supported by only some PDF
   viewers.  We ensure that all notations are visible in Acrobat
   Reader. Other viewers (notably Evince and Xpdf) do not display the
-  highlight annotations.  The working assumption is that this is a
-  failure of the viewer, but I'll happily accept patches to make
-  these annotations more widely supported, provided they do not
-  complicate the code too much.
+  highlight annotations.  For these, a "fake highlighting" mode can be
+  enabled, adding a text annotation that is more widely supported.
+  (Use ``prsam config --fake-highlight-on``.)
 
 About
-'''''
+-----
+The wiki_ has some information on using PRSAnnots, and the `Google
+Group`_ is a good place to ask questions and make comments.
+
+.. _wiki: https://github.com/rschroll/prsannots/wiki
+.. _Google Group: https://groups.google.com/d/forum/prsannots
+
 PRSAnnots has been written (thus far) by Robert Schroll
 (rschroll@gmail.com).  Feel free to get in touch with questions and
 comments.

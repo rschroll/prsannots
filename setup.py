@@ -9,7 +9,7 @@ except ImportError:
 
 setup(
     name = 'prsannots',
-    version = '0.1.1',
+    version = '0.2',
     description = 'Get annotated PDFs from your Sony PRS-T1 ereader.',
     license = 'LGPL 3',
     author = 'Robert Schroll',
