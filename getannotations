@@ -5,8 +5,8 @@
 
 Find all annotated PDFs on the Sony PRS-T1 mounted at the specified
 mount point, and present a menu to let the user chose to export one
-of them with annotations.  Currently, only the freehand annotations
-drawn directly on the page are supported.
+of them with annotations.  Currently, the freehand annotations,
+highlights, and highlights with text notes are supported.
 """
 
 # Copyright 2012 Robert Schroll
