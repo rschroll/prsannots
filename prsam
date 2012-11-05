@@ -76,6 +76,9 @@ from optparse import OptionParser
 from prsannots.manager import Manager, NotMountedError
 from prsannots.pdfdice import UNITS
 from prsannots.openfile import open_file
+# Work around https://bugzilla.gnome.org/show_bug.cgi?id=687697
+import logging
+logging.disable(logging.ERROR)
 try:
     from gi.repository import Notify
     if not Notify.init('PRS Annotation Manager'):
