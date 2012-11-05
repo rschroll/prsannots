@@ -53,8 +53,8 @@ class Manager(object):
     be retrieved.
     
     """
-    _base_settings = {'infix': 'annot', 'reader_dir': 'download', 'gs': None,
-                      'fake_highlight': False}
+    _base_settings = {'infix': 'annot', 'reader_dir': os.path.join('Sony_Reader', 'media', 'books'),
+                      'gs': None, 'fake_highlight': False}
     _id_file = '.prsannots'
     
     def __init__(self):

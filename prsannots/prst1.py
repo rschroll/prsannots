@@ -23,7 +23,7 @@ class Reader(generic.Reader):
         c.execute('''select books._id, books.title, books.file_path, books.thumbnail
                         from books inner join markups
                         on books._id = markups.content_id
-                        where mime_type = "application/pdf" and markup_type != 0
+                        where books.mime_type = "application/pdf" and markups.markup_type != 0
                         group by books._id''')
         return [Book(self, *line) for line in c]
 
