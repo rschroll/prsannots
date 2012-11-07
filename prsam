@@ -73,6 +73,7 @@ import os
 import sys
 import tempfile
 from optparse import OptionParser
+from prsannots import __version__
 from prsannots.manager import Manager, NotMountedError
 from prsannots.pdfdice import UNITS
 from prsannots.openfile import open_file
@@ -390,6 +391,8 @@ def main(args):
         nargs = 0
     else:
         set_usage_description(USAGE[0])
+        parser.version = "%prog " + __version__
+        parser.add_option('--version', action='version', help="show program's version number and exit")
         parser.remove_option('--mount')
         nargs = -1 # Always go to print_usage below.
     
