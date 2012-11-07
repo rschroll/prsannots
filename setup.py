@@ -7,13 +7,16 @@ except ImportError:
     from distutils.core import setup
     check_dependencies = True
 
+# Load in constants
+execfile('prsannots/__init__.py')
+
 setup(
     name = 'prsannots',
-    version = '0.2',
+    version = __version__,
     description = 'Get annotated PDFs from your Sony PRS-T1 ereader.',
-    license = 'LGPL 3',
-    author = 'Robert Schroll',
-    author_email = 'rschroll@gmail.com',
+    license = __license__,
+    author = __author__,
+    author_email = __email__,
     url = 'https://github.com/rschroll/prsannots',
     packages = ['prsannots'],
     scripts = ['prsam', 'prsam-tk', 'getannotations'],
