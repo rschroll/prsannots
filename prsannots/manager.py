@@ -237,6 +237,8 @@ class Manager(object):
         for k,v in self._base_settings.items():
             self.settings[k] = v
         self.update_settings(**kw)
+        
+        self.reader = Reader(self.mount)
     
     def add_pdf(self, filename, dice_pdf=None, dice_map=None, title=None,
                 author=None, infix=None, reader_dir=None, gs=None,
