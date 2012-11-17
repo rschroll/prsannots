@@ -2,10 +2,10 @@ PRSAnnots
 =========
 
 The PRSAnnots project exists to help you get annotated PDF files off
-of your Sony PRS-T1 ereader.  These annotated versions include both
-the freehand and highlighted annotations you made on the reader.  To
-do this, PRSAnnots provides several programs_ as well as a `Python
-package`_ to help you write your own.
+of your Sony PRS-T1 or PRS-T2 ereader.  These annotated versions
+include both the freehand and highlighted annotations you made on
+the reader.  To do this, PRSAnnots provides several programs_ as
+well as a `Python package`_ to help you write your own.
 
 PRSAnnots is alpha software.  There are many rough corners to cut
 yourself on, so please be careful.  But rest assured it does very
@@ -116,7 +116,7 @@ generic       Provides abstractions for the reader, its books, and their
               annotations.  Planned to be useful for all Sony ereaders,
               but this has not been tested.
 ------------- ----------------------------------------------------------
-prst1         Fills in the PRS-T1 specific parts of generic.
+prst1         Fills in the PRS-T1 and -T2 specific parts of generic.
 ------------- ----------------------------------------------------------
 pdfannotation Create PDF annotations and add them to PDF files.
 ------------- ----------------------------------------------------------
@@ -162,8 +162,8 @@ Alternatively, you can download and unpack the tarball_ or zipball_.
 All of the scripts may be run without installation, assuming you
 have satisfied the requirements_.
 
-.. _tarball: https://github.com/rschroll/prsannots/tarball/version-0.2
-.. _zipball: https://github.com/rschroll/prsannots/zipball/version-0.2
+.. _tarball: https://github.com/rschroll/prsannots/tarball/version-0.2.1
+.. _zipball: https://github.com/rschroll/prsannots/zipball/version-0.2.1
 
 You may install PRSAnnots with the ``setup.py`` script::
 
@@ -205,11 +205,14 @@ the defaults).  If you can help make a better Windows installer,
 please `let us know`_.
 
 .. _appropriate installers: http://www.python.org/download/releases/2.7.3/
-.. _PRSAnnots installer: https://github.com/downloads/rschroll/prsannots/prsannots-0.2.linux-x86_64.exe
+.. _PRSAnnots installer: https://github.com/downloads/rschroll/prsannots/prsannots-0.2.1.linux-x86_64.exe
 .. _let us know: https://github.com/rschroll/prsannots/issues
 
 Versions
 --------
+0.2.1 (2012/11/17):
+  Support for the PRS-T2, and a few minor bug fixes.
+
 0.2 (2012/10/21):
   Adds cropping PDFs, previewing cropped and diced files, better
   handling of PDF annotations, and a number of bug fixes.
@@ -238,11 +241,11 @@ Annotation type:
   notes in the PDF file.
 
 Device support:
-  Right now, only the Sony PRS-T1 is supported, because that's what
-  the author has.  From what I can tell, other Sony readers have
-  similar schemes for their annotations, but store the information
-  differently.  Adding support for these readers is hopefully as
-  simple as producing an altered version of ``prst1.py``.
+  Right now, only the Sony PRS-T1 and -T2 are supported, because
+  that's what the author has.  From what I can tell, other Sony
+  readers have similar schemes for their annotations, but store the
+  information differently.  Adding support for these readers is
+  hopefully as simple as producing an altered version of ``prst1.py``.
 
   I don't know how similarly other brands behave, but I'm happy to
   provide what assistance I can in trying to make them work.
@@ -262,6 +265,14 @@ PDF viewers:
   highlight annotations.  For these, a "fake highlighting" mode can be
   enabled, adding a text annotation that is more widely supported.
   (Use ``prsam config --fake-highlight-on``.)
+
+microSD cards:
+  PRSAnnots only works with the files on the reader's main memory by
+  default.  You may tell it to work with the files on the microSD
+  card instead by specifying the mount point of the card instead of
+  the mount point of the reader.  For getannotations, this works
+  pretty well.  For prsam(-tk), it doesn't.  There is no way
+  currently to deal with all the files at once.
 
 About
 -----
