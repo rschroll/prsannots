@@ -24,14 +24,15 @@ def pdf_add_content(content_string, page, scale=1, offsetx=0, offsety=0):
     
     """
     coord_trans = '%.2f 0 0 %.2f %.2f %.2f cm' % (scale, scale, offsetx, offsety)
-    commands = '\n'.join(('q', coord_trans, content_string, 'Q'))
+    commands = '\n'.join(('Q', 'q', coord_trans, content_string, 'Q'))
     
     try:
         orig_content = page['/Contents'].getObject()
     except KeyError:
         orig_content = ArrayObject([])
     stream = ContentStream(orig_content, page.pdf)
-    stream.operations.append([[], commands])
+    stream.operations.insert(0, [[], 'q'])    # Existing content may not restore
+    stream.operations.append([[], commands])  # graphics state at the end.
     page[NameObject('/Contents')] = stream
 
 def svg_to_pdf_content(svg):
