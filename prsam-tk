@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright 2012 Robert Schroll
+# Copyright 2012-2013 Robert Schroll
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as
@@ -28,6 +28,7 @@ import tkFileDialog
 from prsannots.manager import Manager, NotMountedError
 from prsannots.pdfdice import UNITS
 from prsannots.openfile import open_file
+from prsannots.misc import u_argv
 
 class EntryValue(Entry):
     
@@ -194,7 +195,6 @@ class Main(Frame):
             return
         
         if self.manager.in_library(filename):
-            print self.manager.in_library(filename)
             self.message("Selected file is already in library.")
             return
         
@@ -328,8 +328,8 @@ if __name__ == '__main__':
     
     main = Main(root, m, needs_save)
     main.pack(padx=2, pady=2)
-    if len(sys.argv) > 1:
-        filename = os.path.abspath(sys.argv[1])
+    if len(u_argv) > 1:
+        filename = os.path.abspath(u_argv[1])
         if os.path.exists(filename):
             main.prep_file(filename)
     

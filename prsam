@@ -53,7 +53,7 @@ prsam clean
 Remove files from the library that are no longer on the reader.
 """
 
-# Copyright 2012 Robert Schroll
+# Copyright 2012-2013 Robert Schroll
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as
@@ -77,6 +77,7 @@ from prsannots import __version__
 from prsannots.manager import Manager, NotMountedError
 from prsannots.pdfdice import UNITS
 from prsannots.openfile import open_file
+from prsannots.misc import u_print, u_argv
 # Work around https://bugzilla.gnome.org/show_bug.cgi?id=687697
 import logging
 logging.disable(logging.ERROR)
@@ -96,7 +97,7 @@ else:
 USAGE = __doc__.strip().split('\n~~\n')
 
 def print_err_exit(message):
-    print >>sys.stderr, message
+    u_print(message, sys.stderr)
     sys.exit(1)
 
 def get_manager(mount=None):
@@ -150,9 +151,9 @@ def do_config(args, options):
     if updated:
         m.save()
     else:
-        print "Library Settings:"
+        u_print("Library Settings:")
         for k,v in m.settings.items():
-            print " %15s  %s" % (k, v)
+            u_print(" %15s  %s" % (k, v))
 
 def do_add(args, options):
     m = get_manager(options.mount)
@@ -237,18 +238,18 @@ def do_remove(args, options):
 def do_ls(args, options):
     m = get_manager(options.mount)
     for k in m.library:
-        print k
+        u_print(k)
 
 def do_sync(args, options):
     m = get_manager(options.mount)
     
     if options.list:
         for fn in m.needing_sync:
-            print "Sync %s" % m.library[fn]['filename']
+            u_print("Sync %s" % m.library[fn]['filename'])
         if not m.needing_sync:
-            print "No files need to be synced"
+            u_print("No files need to be synced")
         if options.clean:
-            print "Clean library"
+            u_print("Clean library")
         return
     
     if options.notify:
@@ -256,12 +257,12 @@ def do_sync(args, options):
     need_sync = m.needing_sync
     for fn in need_sync:
         if options.verbose:
-            print "Syncing %s ..." % m.library[fn]['filename']
+            u_print("Syncing %s ..." % m.library[fn]['filename'])
         try:
             m.sync_pdf(fn)
         except Exception, e:
             msg = "Error syncing %s: %s" % (fn, e)
-            print msg
+            u_print(msg)
             if options.notify:
                 notify(msg)
     num = len(need_sync)
@@ -274,7 +275,7 @@ def do_sync(args, options):
             notify("Updated %i annotated files" % num)
     if options.clean:
         if options.verbose:
-            print "Cleaning library ..."
+            u_print("Cleaning library ...")
         m.clean()
     m.save()
 
@@ -411,4 +412,4 @@ def main(args):
     function(args, options)
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    main(u_argv[1:])

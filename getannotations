@@ -9,7 +9,7 @@ of them with annotations.  Currently, the freehand annotations,
 highlights, and highlights with text notes are supported.
 """
 
-# Copyright 2012 Robert Schroll
+# Copyright 2012-2013 Robert Schroll
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as
@@ -29,22 +29,19 @@ import os
 import sys
 import pyPdf
 from prsannots.prst1 import Reader
+from prsannots.misc import u_raw_input, u_print, u_argv
 
-
-def u_raw_input(prompt):
-    """raw_input with unicode encoding/decoding."""
-    return raw_input(prompt.encode(sys.stdout.encoding)).decode(sys.stdin.encoding)
 
 def select_book(books):
-    print "Please select which book to get:"
+    u_print("Please select which book to get:")
     for i, book in enumerate(books):
         title = book.title or book.file.split('/')[-1]
-        print "  %i. %s" % (i+1, title)
+        u_print("  %i. %s" % (i+1, title))
     which = u_raw_input("> ")
     try:
         return books[int(which) - 1]
     except (ValueError, IndexError):
-        print "Could not understand your response.  Aborting."
+        u_print("Could not understand your response.  Aborting.")
     sys.exit(1)
 
 def main(path):
@@ -58,11 +55,11 @@ def main(path):
     book.write_annotated_pdf(open(outfn, 'wb'))
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
-        print __doc__ % sys.argv[0]
+    if len(u_argv) != 2:
+        u_print(__doc__ % sys.argv[0])
         sys.exit(0)
-    if not os.path.ismount(sys.argv[1]):
-        print "First argument must be mount point of Sony Reader."
-        print "(%s does not appear to be a mount point.)" % sys.argv[1]
+    if not os.path.ismount(u_argv[1]):
+        u_print("First argument must be mount point of Sony Reader.")
+        u_print("(%s does not appear to be a mount point.)" % sys.argv[1])
         sys.exit(1)
     main(sys.argv[1])
