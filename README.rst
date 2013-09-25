@@ -11,7 +11,8 @@ PRSAnnots is alpha software.  There are many rough corners to cut
 yourself on, so please be careful.  But rest assured it does very
 little to the ereader itself, so it's unlikely for that to be broken.
 
-.. contents::
+.. contents:: **Contents**
+   :local:
 
 Programs
 --------
