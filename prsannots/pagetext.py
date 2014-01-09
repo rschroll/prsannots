@@ -5,7 +5,7 @@
 
 from pdfminer.pdfparser import PDFParser
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
-from pdfminer.layout import LAParams, LTAnon, LTTextBox
+from pdfminer.layout import LAParams, LTTextBox
 from pdfminer.converter import PDFPageAggregator
 
 # pdfminer suddenly decided to change its API...
