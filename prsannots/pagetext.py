@@ -3,10 +3,38 @@
 # This file is part of prsannots and is distributed under the terms of
 # the LGPL license.  See the file COPYING for full details.
 
-from pdfminer.pdfparser import PDFParser, PDFDocument
+from pdfminer.pdfparser import PDFParser
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
-from pdfminer.layout import LAParams, LTAnon, LTTextBox
+from pdfminer.layout import LAParams, LTTextBox
 from pdfminer.converter import PDFPageAggregator
+
+# pdfminer suddenly decided to change its API...
+try:
+    from pdfminer.pdfparser import PDFDocument
+    
+    def new_doc(parser):
+        doc = PDFDocument()
+        parser.set_document(doc)
+        doc.set_parser(parser)
+        return doc
+    
+    def get_pages(doc):
+        return doc.get_pages()
+
+except ImportError:
+    from pdfminer.pdfdocument import PDFDocument
+    from pdfminer.pdfpage import PDFPage
+
+    def new_doc(parser):
+        return PDFDocument(parser)
+    
+    def get_pages(doc):
+        return PDFPage.create_pages(doc)
+
+try:
+    from pdfminer.layout import LTAnon
+except ImportError:
+    from pdfminer.layout import LTAnno as LTAnon
 
 
 LIGATURES = {u"\ufb00": "ff",
@@ -27,9 +55,7 @@ def get_layouts(fd):
     """From an open PDF file, get the page layouts (of type pdfminer.layout.LTPage)."""
     
     parser = PDFParser(fd)
-    doc = PDFDocument()
-    parser.set_document(doc)
-    doc.set_parser(parser)
+    doc = new_doc(parser)
     doc.initialize()
     
     laparams = LAParams()
@@ -38,7 +64,7 @@ def get_layouts(fd):
     interpreter = PDFPageInterpreter(rsrcmgr, device)
     
     layouts = []
-    for page in doc.get_pages():
+    for page in get_pages(doc):
         interpreter.process_page(page)
         layouts.append(device.get_result())
     return layouts
