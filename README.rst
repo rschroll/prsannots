@@ -163,8 +163,8 @@ Alternatively, you can download and unpack the tarball_ or zipball_.
 All of the scripts may be run without installation, assuming you
 have satisfied the requirements_.
 
-.. _tarball: https://github.com/rschroll/prsannots/tarball/version-0.2.1
-.. _zipball: https://github.com/rschroll/prsannots/zipball/version-0.2.1
+.. _tarball: https://github.com/rschroll/prsannots/tarball/version-0.2.2
+.. _zipball: https://github.com/rschroll/prsannots/zipball/version-0.2.2
 
 You may install PRSAnnots with the ``setup.py`` script::
 
@@ -206,11 +206,14 @@ the defaults).  If you can help make a better Windows installer,
 please `let us know`_.
 
 .. _appropriate installers: http://www.python.org/download/releases/2.7.3/
-.. _PRSAnnots installer: https://github.com/downloads/rschroll/prsannots/prsannots-0.2.1.linux-x86_64.exe
+.. _PRSAnnots installer: https://github.com/rschroll/prsannots/releases/download/version-0.2.1/prsannots-0.2.1-x86_64.exe
 .. _let us know: https://github.com/rschroll/prsannots/issues
 
 Versions
 --------
+0.2.2 (2014/1/10):
+  A few bug fixes and an update of the PDFMiner API.
+
 0.2.1 (2012/11/17):
   Support for the PRS-T2, and a few minor bug fixes.
 

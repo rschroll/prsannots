@@ -1,4 +1,4 @@
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 __license__ = "LGPL 3"
 __author__ = "Robert Schroll"
 __email__ = "rschroll@gmail.com"
