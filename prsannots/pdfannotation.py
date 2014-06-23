@@ -23,7 +23,7 @@ def _markup_annotation(rect, contents=None, author=None, subject=None,
                                 NameObject('/F'): NumberObject(flag),
                                 NameObject('/Rect'): float_array(rect),
                                 NameObject('/Type'): NameObject('/Annot'),
-                                NameObject('/CreationDate'): TextStringObject(now),
+                                NameObject('/CreationDate'): now(),
                                 NameObject('/M'): now(),
                              })
     retval.popup = False  # Whether to add an explicit popup when adding to page
