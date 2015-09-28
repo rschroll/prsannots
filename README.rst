@@ -206,7 +206,7 @@ the defaults).  If you can help make a better Windows installer,
 please `let us know`_.
 
 .. _appropriate installers: http://www.python.org/download/releases/2.7.3/
-.. _PRSAnnots installer: https://github.com/rschroll/prsannots/releases/download/version-0.2.1/prsannots-0.2.1-x86_64.exe
+.. _PRSAnnots installer: https://github.com/rschroll/prsannots/releases/download/version-0.2.2/prsannots-0.2.2-x86_64.exe
 .. _let us know: https://github.com/rschroll/prsannots/issues
 
 Versions
